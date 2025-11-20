@@ -10,9 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -34,6 +33,8 @@ interface SignUpDialogProps {
 
 export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const {
     register,
@@ -61,7 +62,7 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
       if (data.userType === 'doctor') {
         router.push('/dashboard')
       } else {
-        router.push('/patient/dashboard')
+        router.push('/patient-dashboard')
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account')
@@ -81,21 +82,30 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="userType">I am a:</Label>
-            <RadioGroup
-              value={userType}
-              onValueChange={(value) => setValue('userType', value as 'doctor' | 'patient')}
-              className="flex gap-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="doctor" id="doctor" />
-                <Label htmlFor="doctor" className="cursor-pointer">Doctor</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="patient" id="patient" />
-                <Label htmlFor="patient" className="cursor-pointer">Patient</Label>
-              </div>
-            </RadioGroup>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setValue('userType', 'doctor')}
+                className={`py-2.5 px-4 rounded-md font-medium text-sm transition-all ${
+                  userType === 'doctor'
+                    ? 'bg-white text-helix-primary shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Doctor
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue('userType', 'patient')}
+                className={`py-2.5 px-4 rounded-md font-medium text-sm transition-all ${
+                  userType === 'patient'
+                    ? 'bg-white text-helix-primary shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Patient
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -122,12 +132,26 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register('password')}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                {...register('password')}
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-sm text-red-600">{errors.password.message}</p>
             )}
@@ -135,12 +159,26 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              {...register('confirmPassword')}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                {...register('confirmPassword')}
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {errors.confirmPassword && (
               <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
             )}

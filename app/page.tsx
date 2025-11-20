@@ -9,7 +9,7 @@ import Footer from '@/components/landing/footer'
 export default function Home() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      <Navigation />
+      <Navigation showScrollProgress={true} />
       <HeroSection />
       <FeaturesSection />
       <WhyHelixSection />

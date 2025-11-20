@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 export default function HeroSection() {
   return (
     <section 
-      className="relative pt-20 pb-32 px-6"
+      className="relative pt-12 pb-32 px-6"
       style={{
         backgroundColor: '#ffffff',
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 200 200'%3E%3Cpolygon fill='%230D4C73' fill-opacity='0.04' points='100 0 0 100 100 100 100 200 200 100 200 0'/%3E%3C/svg%3E")`
