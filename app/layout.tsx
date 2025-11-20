@@ -27,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${manrope.className} font-sans antialiased bg-background`}>
+    <html lang="en" className="overflow-x-hidden">
+      <body className={`${manrope.className} font-sans antialiased bg-background overflow-x-hidden`}>
         {children}
       </body>
     </html>
