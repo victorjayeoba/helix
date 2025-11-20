@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Printer, RefreshCw, User, ExternalLink, MoreVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Printer, RefreshCw, User, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Appointment } from '@/lib/api/appointments'
@@ -48,6 +48,7 @@ export default function DoctorSchedule({
     error, 
     fetchAppointments: fetchAppointmentsFromStore,
     fetchPatientAppointments,
+    updateAppointment,
     selectedPatientId
   } = useAppointmentsStore()
   
@@ -552,7 +553,6 @@ export default function DoctorSchedule({
                                 <div className="text-xs text-slate-500 mb-1">Appointment ID</div>
                                 <div className="text-sm font-semibold text-slate-900">#{pos.appointment.id}</div>
                               </div>
-                              <MoreVertical className="w-4 h-4 text-slate-400" />
                             </div>
 
                             {/* Patient Info */}
@@ -718,7 +718,6 @@ export default function DoctorSchedule({
                                 <div className="text-xs text-slate-500 mb-1">Appointment ID</div>
                                 <div className="text-sm font-semibold text-slate-900">#{pos.appointment.id}</div>
                               </div>
-                              <MoreVertical className="w-4 h-4 text-slate-400" />
                             </div>
 
                             {/* Patient Info */}
@@ -849,7 +848,6 @@ export default function DoctorSchedule({
                                     <div className="text-xs text-slate-500 mb-1">Appointment ID</div>
                                     <div className="text-sm font-semibold text-slate-900">#{formatted.id}</div>
                                   </div>
-                                  <MoreVertical className="w-4 h-4 text-slate-400" />
                                 </div>
 
                                 {/* Patient Info */}

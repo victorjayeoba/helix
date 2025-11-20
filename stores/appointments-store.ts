@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Appointment, fetchAppointments } from '@/lib/api/appointments'
+import { Appointment, fetchAppointments, updateAppointment as updateAppointmentAPI, UpdateAppointmentData } from '@/lib/api/appointments'
 
 interface AppointmentsState {
   appointments: Appointment[]
@@ -13,6 +13,7 @@ interface AppointmentsState {
   // Actions
   fetchAppointments: (apiEndpoint?: string, forceRefresh?: boolean) => Promise<void>
   fetchPatientAppointments: (patientId: number, forceRefresh?: boolean) => Promise<void>
+  updateAppointment: (appointmentId: number, data: UpdateAppointmentData) => Promise<void>
   setSelectedPatient: (patientId: number | null) => void
   clearCache: () => void
   setCacheDuration: (duration: number) => void
@@ -96,6 +97,21 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
         loading: false, 
         error: error.message || 'Failed to fetch patient appointments' 
       })
+    }
+  },
+
+  updateAppointment: async (appointmentId: number, data: UpdateAppointmentData) => {
+    try {
+      const updated = await updateAppointmentAPI(appointmentId, data)
+      const state = get()
+      const updatedAppointments = state.appointments.map(app => 
+        app.id === appointmentId ? updated : app
+      )
+      set({ appointments: updatedAppointments })
+      console.log(`✅ Updated appointment ${appointmentId}`)
+    } catch (error: any) {
+      console.error('❌ Error updating appointment:', error)
+      throw error
     }
   },
 

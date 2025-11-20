@@ -34,10 +34,18 @@ export function TabProvider({ children }: { children: ReactNode }) {
   const [activeTabId, setActiveTabId] = useState<string | null>('calendar-1')
 
   const openTab = (type: string, label: string, data?: any) => {
-    // For patient profile, check if tab with same patientId exists
+    // Prevent duplicate tabs for patient profile or encounter detail
     if (type === 'PatientProfile' && data?.patientId) {
       const existingTab = tabs.find(tab => 
         tab.type === type && tab.data?.patientId === data.patientId
+      )
+      if (existingTab) {
+        setActiveTabId(existingTab.id)
+        return
+      }
+    } else if (type === 'EncounterDetail' && data?.encounterId) {
+      const existingTab = tabs.find(tab =>
+        tab.type === type && tab.data?.encounterId === data.encounterId
       )
       if (existingTab) {
         setActiveTabId(existingTab.id)
