@@ -182,6 +182,14 @@ export default function Navigation({ showScrollProgress = false }: NavigationPro
                 <div className="hidden lg:block px-4 py-2 text-sm text-slate-600">
                   {userData?.displayName || user.email} ({userData?.userType})
                 </div>
+                <Link href={userData?.userType === 'doctor' ? '/dashboard' : '/patient-dashboard'}>
+                  <Button 
+                    variant="outline"
+                    className="px-4 py-2 text-sm"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
                 <Button 
                   variant="outline"
                   onClick={handleSignOut}
@@ -298,6 +306,15 @@ export default function Navigation({ showScrollProgress = false }: NavigationPro
                       <div className="px-4 py-2 text-sm text-slate-600 mb-2">
                         {userData?.displayName || user.email} ({userData?.userType})
                       </div>
+                      <Link href={userData?.userType === 'doctor' ? '/dashboard' : '/patient-dashboard'}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="w-full mb-2"
+                        >
+                          Dashboard
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         onClick={() => {

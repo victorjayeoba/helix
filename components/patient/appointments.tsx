@@ -91,6 +91,25 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                 </DialogDescription>
               </DialogHeader>
               <form className="space-y-4 mt-4">
+                {/* Appointment Type - Virtual or Physical */}
+                <div className="space-y-2">
+                  <Label>Appointment Type</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className="px-4 py-3 border-2 border-helix-primary bg-helix-primary text-white rounded-lg font-medium transition hover:bg-helix-secondary hover:border-helix-secondary"
+                    >
+                      Virtual
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-3 border-2 border-slate-300 bg-white text-slate-700 rounded-lg font-medium transition hover:border-helix-primary hover:bg-helix-light"
+                    >
+                      Physical
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="specialty">Specialty</Label>
                   <Select>
@@ -123,11 +142,41 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                   </div>
                 </div>
 
+                {/* Appointment Reason Type */}
                 <div className="space-y-2">
-                  <Label htmlFor="reason">Reason for Visit</Label>
+                  <Label htmlFor="reason-type">Reason for Appointment</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="consultation">Consultation</SelectItem>
+                      <SelectItem value="followup">Follow-up Visit</SelectItem>
+                      <SelectItem value="checkup">Regular Checkup</SelectItem>
+                      <SelectItem value="prescription">Prescription Refill</SelectItem>
+                      <SelectItem value="test-results">Discuss Test Results</SelectItem>
+                      <SelectItem value="emergency">Urgent/Emergency</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
-                    id="reason"
-                    placeholder="Describe your symptoms or reason for visit"
+                    id="description"
+                    placeholder="Describe your symptoms, concerns, or reason for visit in detail..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* Questions for Doctor */}
+                <div className="space-y-2">
+                  <Label htmlFor="questions">Questions for Doctor (Optional)</Label>
+                  <Textarea
+                    id="questions"
+                    placeholder="List any specific questions you'd like to ask the doctor during your appointment..."
                     rows={3}
                   />
                 </div>
@@ -208,7 +257,7 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                 <CardContent className="p-4 md:p-6">
                   <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                     <div className="flex gap-4">
-                      <div className="w-14 h-14 bg-helix-primary rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-14 h-14 bg-helix-primary rounded-full flex items-center justify-center shrink-0">
                         <User className="w-7 h-7 text-white" />
                       </div>
                       <div className="flex-1">

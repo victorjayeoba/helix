@@ -7,7 +7,7 @@ import {
   Bell, 
   Calendar,
   FileCheck,
-  Smartphone,
+  MapPin,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -106,10 +106,10 @@ export default function WhyHelixSection() {
           angle: 100
         },
         {
-          id: 'mobile',
-          icon: Smartphone,
-          title: "Mobile Access",
-          description: "Access your health information on any device, even with limited internet connectivity. Built for African environments with offline support.",
+          id: 'locator',
+          icon: MapPin,
+          title: "Healthcare Locator",
+          description: "Instantly find nearby hospitals and pharmacies for your specific needs. Our smart locator simplifies routes to capable centers, eliminating complex map navigation during emergencies.",
           angle: 120
         }
       ]
