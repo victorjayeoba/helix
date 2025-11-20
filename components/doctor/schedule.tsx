@@ -612,7 +612,7 @@ export default function DoctorSchedule({
 
                             {/* Action Button */}
                             <Button 
-                              className="w-full bg-helix-primary hover:bg-helix-primary/90"
+                              className="w-full bg-helix-primary hover:bg-helix-primary/90 cursor-pointer"
                               onClick={() => {
                                 const patientName = pos.appointment.patientName
                                 openTab('PatientProfile', patientName, { patientId: pos.appointment.patientId })
@@ -778,7 +778,7 @@ export default function DoctorSchedule({
 
                             {/* Action Button */}
                             <Button 
-                              className="w-full bg-helix-primary hover:bg-helix-primary/90"
+                              className="w-full bg-helix-primary hover:bg-helix-primary/90 cursor-pointer"
                               onClick={() => {
                                 const patientName = pos.appointment.patientName
                                 openTab('PatientProfile', patientName, { patientId: pos.appointment.patientId })
@@ -899,7 +899,7 @@ export default function DoctorSchedule({
 
                                 {/* Action Button */}
                                 <Button 
-                                  className="w-full bg-helix-primary hover:bg-helix-primary/90"
+                                  className="w-full bg-helix-primary hover:bg-helix-primary/90 cursor-pointer"
                                   onClick={() => {
                                     const patientName = formatted.patientName
                                     openTab('PatientProfile', patientName, { patientId: formatted.patientId })
