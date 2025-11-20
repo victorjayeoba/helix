@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Manrope } from 'next/font/google'
 import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { Toaster } from '@/components/ui/sonner'
 
 const manrope = Manrope({ 
   subsets: ['latin'],
@@ -29,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden">
       <body className={`${manrope.className} font-sans antialiased bg-background overflow-x-hidden`}>
-        {children}
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   )
