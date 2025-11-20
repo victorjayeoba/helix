@@ -22,6 +22,17 @@ export default function EncounterDetail({ encounterId, patientName }: EncounterD
     }
   }, [encounterId, fetchEncounter])
 
+  // Listen for tab refresh events
+  useEffect(() => {
+    const handleRefresh = (event: CustomEvent) => {
+      if (event.detail.tabType === 'EncounterDetail' && event.detail.tabData?.encounterId === encounterId) {
+        fetchEncounter(encounterId, true) // Force refresh
+      }
+    }
+    window.addEventListener('tab-refresh', handleRefresh as EventListener)
+    return () => window.removeEventListener('tab-refresh', handleRefresh as EventListener)
+  }, [encounterId, fetchEncounter])
+
   const encounter = encounters[encounterId]
   const isLoading = loadingIds.has(encounterId)
   const error = errorById[encounterId]

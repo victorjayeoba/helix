@@ -120,6 +120,21 @@ export default function DoctorSchedule({
     }
   }, [apiEndpoint, fetchAppointmentsFromStore, selectedPatientId])
 
+  // Listen for tab refresh events
+  useEffect(() => {
+    const handleRefresh = (event: CustomEvent) => {
+      if (event.detail.tabType === 'Calendar') {
+        if (selectedPatientId === null) {
+          fetchAppointmentsFromStore(apiEndpoint, true) // Force refresh
+        } else {
+          fetchPatientAppointments(selectedPatientId, true) // Force refresh
+        }
+      }
+    }
+    window.addEventListener('tab-refresh', handleRefresh as EventListener)
+    return () => window.removeEventListener('tab-refresh', handleRefresh as EventListener)
+  }, [apiEndpoint, fetchAppointmentsFromStore, fetchPatientAppointments, selectedPatientId])
+
   // Manual refresh function (force refresh bypasses cache)
   const loadAppointments = async () => {
     if (selectedPatientId === null) {

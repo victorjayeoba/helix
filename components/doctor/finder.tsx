@@ -22,6 +22,17 @@ export default function PatientFinder() {
     fetchPatients()
   }, [fetchPatients])
 
+  // Listen for tab refresh events
+  useEffect(() => {
+    const handleRefresh = (event: CustomEvent) => {
+      if (event.detail.tabType === 'Finder') {
+        fetchPatients(true) // Force refresh
+      }
+    }
+    window.addEventListener('tab-refresh', handleRefresh as EventListener)
+    return () => window.removeEventListener('tab-refresh', handleRefresh as EventListener)
+  }, [fetchPatients])
+
   // Filter patients based on search terms
   const filteredPatients = useMemo(() => {
     return patients.filter(patient => {

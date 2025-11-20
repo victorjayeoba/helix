@@ -53,6 +53,18 @@ export default function PatientProfile({ patientId }: PatientProfileProps) {
     loadEncounters()
   }, [loadAppointments, loadEncounters])
 
+  // Listen for tab refresh events
+  useEffect(() => {
+    const handleRefresh = (event: CustomEvent) => {
+      if (event.detail.tabType === 'PatientProfile' && event.detail.tabData?.patientId === patientId) {
+        loadAppointments(true) // Force refresh
+        loadEncounters(true) // Force refresh
+      }
+    }
+    window.addEventListener('tab-refresh', handleRefresh as EventListener)
+    return () => window.removeEventListener('tab-refresh', handleRefresh as EventListener)
+  }, [patientId, loadAppointments, loadEncounters])
+
   const patient = patients.find(p => p.id === patientId)
 
   if (!patient) {

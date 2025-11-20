@@ -5,7 +5,7 @@ import { useTabs } from '@/contexts/TabContext'
 import { Button } from '@/components/ui/button'
 
 export default function TabBar() {
-  const { tabs, activeTabId, closeTab, setActiveTab } = useTabs()
+  const { tabs, activeTabId, closeTab, setActiveTab, refreshTab } = useTabs()
 
   if (tabs.length === 0) {
     return null
@@ -34,7 +34,7 @@ export default function TabBar() {
             className="h-5 w-5 hover:bg-slate-200 rounded"
             onClick={(e) => {
               e.stopPropagation()
-              // Refresh functionality - can be implemented later
+              refreshTab(tab.id)
             }}
           >
             <RefreshCw className="w-3 h-3" />

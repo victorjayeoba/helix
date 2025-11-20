@@ -15,6 +15,7 @@ interface TabContextType {
   openTab: (type: string, label: string, data?: any) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
+  refreshTab: (tabId: string) => void
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined)
@@ -89,8 +90,18 @@ export function TabProvider({ children }: { children: ReactNode }) {
     setActiveTabId(id)
   }
 
+  const refreshTab = (tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId)
+    if (!tab) return
+
+    // Dispatch a custom event that components can listen to
+    window.dispatchEvent(new CustomEvent('tab-refresh', { 
+      detail: { tabId, tabType: tab.type, tabData: tab.data } 
+    }))
+  }
+
   return (
-    <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, setActiveTab }}>
+    <TabContext.Provider value={{ tabs, activeTabId, openTab, closeTab, setActiveTab, refreshTab }}>
       {children}
     </TabContext.Provider>
   )
