@@ -1,16 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Send, Bot, User, Stethoscope, Menu, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
+import { useAuth } from '@/contexts/AuthContext'
+import { 
+  createOrGetConversation, 
+  sendMessage, 
+  subscribeToMessages,
+  ChatMessage 
+} from '@/lib/firebase/chat'
+import { toast } from 'sonner'
 
 type ChatMode = 'doctor' | 'ai'
 
 interface Message {
-  id: number
+  id: string
   sender: 'user' | 'doctor' | 'ai'
   text: string
   timestamp: string
@@ -21,48 +29,115 @@ interface PatientChatProps {
 }
 
 export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {}) {
+  const { user, userData } = useAuth()
   const [chatMode, setChatMode] = useState<ChatMode>('ai')
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
+      id: '1',
       sender: 'ai',
       text: 'Hello! I\'m your AI Health Assistant. How can I help you today?',
       timestamp: '10:30 AM'
     }
   ])
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  // Initialize doctor chat conversation
+  useEffect(() => {
+    if (chatMode === 'doctor' && user && userData) {
+      initializeDoctorChat()
+    }
+  }, [chatMode, user, userData])
+
+  const initializeDoctorChat = async () => {
+    if (!user || !userData) return
+
+    try {
+      setLoading(true)
+      const convId = await createOrGetConversation(
+        user.uid,
+        userData.displayName || user.email || 'Patient',
+        user.email || undefined
+      )
+      setConversationId(convId)
+
+      // Subscribe to real-time messages
+      const unsubscribe = subscribeToMessages(convId, (chatMessages: ChatMessage[]) => {
+        const formattedMessages: Message[] = chatMessages.map((msg) => ({
+          id: msg.id,
+          sender: msg.senderType === 'patient' ? 'user' : 'doctor',
+          text: msg.text,
+          timestamp: new Date(msg.timestamp).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        }))
+
+        if (formattedMessages.length === 0) {
+          // Show welcome message
+          setMessages([{
+            id: 'welcome',
+            sender: 'doctor',
+            text: 'Hello! A doctor will be with you shortly. Please describe your concern.',
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }])
+        } else {
+          setMessages(formattedMessages)
+        }
+      })
+
+      return () => unsubscribe()
+    } catch (error) {
+      console.error('Error initializing doctor chat:', error)
+      toast.error('Failed to connect to doctor chat')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Update greeting message when mode changes
   const handleModeChange = (mode: ChatMode) => {
     setChatMode(mode)
-    const greetingText = mode === 'ai' 
-      ? 'Hello! I\'m your AI Health Assistant. How can I help you today?'
-      : 'Hello! I\'m connecting you with a medical professional. Please describe your concern.'
-    setMessages([{
-      id: 1,
-      sender: mode,
-      text: greetingText,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    }])
+    if (mode === 'ai') {
+      setMessages([{
+        id: '1',
+        sender: 'ai',
+        text: 'Hello! I\'m your AI Health Assistant. How can I help you today?',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      }])
+      setConversationId(null)
+    }
   }
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return
+    if (!message.trim() || loading) return
 
-    const userMessage: Message = {
-      id: messages.length + 1,
-      sender: 'user',
-      text: message,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    }
-
-    setMessages(prev => [...prev, userMessage])
     const currentMessage = message
     setMessage('')
 
     // For AI mode, get response from API
     if (chatMode === 'ai') {
+      const userMessage: Message = {
+        id: `${Date.now()}`,
+        sender: 'user',
+        text: currentMessage,
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      }
+      setMessages(prev => [...prev, userMessage])
+
       try {
+        setLoading(true)
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -75,7 +150,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
         const data = await response.json()
 
         const aiResponse: Message = {
-          id: messages.length + 2,
+          id: `${Date.now() + 1}`,
           sender: 'ai',
           text: data.message || 'I apologize, but I could not generate a response. Please try again.',
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -85,24 +160,39 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
       } catch (error) {
         console.error('Chat error:', error)
         const errorMessage: Message = {
-          id: messages.length + 2,
+          id: `${Date.now() + 1}`,
           sender: 'ai',
           text: 'I apologize, but I encountered an error. Please try again.',
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         }
         setMessages(prev => [...prev, errorMessage])
+      } finally {
+        setLoading(false)
       }
     } else {
-      // For doctor mode, simulate response (real-time messaging would require WebSocket)
-      setTimeout(() => {
-        const response: Message = {
-          id: messages.length + 2,
-          sender: 'doctor',
-          text: 'Thank you for reaching out. A doctor will be with you shortly. In the meantime, please provide more details about your symptoms.',
-          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        }
-        setMessages(prev => [...prev, response])
-      }, 1000)
+      // For doctor mode, send real message via Firebase
+      if (!user || !userData || !conversationId) {
+        toast.error('Please sign in to chat with a doctor')
+        return
+      }
+
+      try {
+        setLoading(true)
+        await sendMessage(
+          conversationId,
+          user.uid,
+          'patient',
+          userData.displayName || user.email || 'Patient',
+          currentMessage
+        )
+        // Message will appear via real-time listener
+      } catch (error) {
+        console.error('Error sending message:', error)
+        toast.error('Failed to send message')
+        setMessage(currentMessage) // Restore message on error
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -214,6 +304,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
@@ -234,6 +325,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
           />
           <Button
             onClick={handleSendMessage}
+            disabled={loading || !message.trim()}
             className="bg-helix-primary hover:bg-helix-secondary px-6"
           >
             <Send className="w-5 h-5" />
