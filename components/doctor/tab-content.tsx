@@ -7,7 +7,7 @@ import AppointmentsList from './appointments'
 import Messages from './messages'
 import PatientProfile from './patient-profile'
 import EncounterDetail from './encounter-detail'
-import DoctorCopilot from './copilot'
+import DoctorCoBrain from './copilot'
 
 export default function TabContent() {
   const { tabs, activeTabId } = useTabs()
@@ -39,8 +39,8 @@ export default function TabContent() {
           patientName={activeTab.data?.patientName}
         />
       )
-    case 'Copilot':
-      return <DoctorCopilot />
+    case 'CoBrain':
+      return <DoctorCoBrain />
     default:
       return (
         <div className="flex-1 bg-white h-full p-6">

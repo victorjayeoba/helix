@@ -13,8 +13,8 @@ interface AssistantResponse {
   error?: string
 }
 
-export default function DoctorCopilot() {
-  const [message, setMessage] = useState("Summarize patient 42's last appointment.")
+export default function DoctorCoBrain() {
+  const [message, setMessage] = useState("Summarize patient 99's last appointment.")
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<AssistantResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +50,7 @@ export default function DoctorCopilot() {
     <div className="flex-1 bg-white h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto py-8 px-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Doctor Copilot</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Helix CoBrain</h1>
           <p className="text-sm text-slate-600 mt-1">
             Ask the AI assistant questions about patients, encounters, and documentation.
           </p>
@@ -68,7 +68,7 @@ export default function DoctorCopilot() {
             <Mic className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
           </div>
           <Button onClick={sendRequest} disabled={loading}>
-            {loading ? 'Thinking...' : 'Ask Copilot'}
+            {loading ? 'Thinking...' : 'Ask Helix CoBrain'}
           </Button>
         </div>
 

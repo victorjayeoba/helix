@@ -13,7 +13,7 @@ interface AssistantResponse {
 }
 
 export default function AssistantTestPage() {
-  const [message, setMessage] = useState("Show me patient 42's last two encounters")
+  const [message, setMessage] = useState("Show me patient 99's last two encounters")
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<AssistantResponse | null>(null)
   const [error, setError] = useState<string | null>(null)

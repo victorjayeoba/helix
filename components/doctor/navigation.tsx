@@ -12,7 +12,7 @@ const navTabs = [
   'Finder',
   'Appointments',
   'Messages',
-  'Copilot'
+  'CoBrain'
 ]
 
 export default function DoctorNavigation() {
@@ -30,7 +30,7 @@ export default function DoctorNavigation() {
       'Finder': 'Patient Finder',
       'Appointments': 'Appointments',
       'Messages': 'Message Center',
-      'Copilot': 'Doctor Copilot'
+      'CoBrain': 'Helix CoBrain'
     }
     openTab(tab, labelMap[tab] || tab)
   }
@@ -51,7 +51,7 @@ export default function DoctorNavigation() {
           ))}
         </div>
 
-        {/* Copilot Quick Prompt */}
+        {/* Helix CoBrain Quick Prompt */}
         <div className="flex items-center gap-4 relative">
           <button
             className="p-2 hover:bg-slate-600 rounded-lg transition flex items-center gap-2"
@@ -62,13 +62,13 @@ export default function DoctorNavigation() {
             }}
           >
             <Bot className="w-5 h-5 text-white" />
-            <span className="hidden sm:inline text-sm font-medium">Quick Copilot</span>
+            <span className="hidden sm:inline text-sm font-medium">Quick CoBrain</span>
           </button>
 
           {copilotOpen && (
             <div className="absolute right-12 top-10 w-80 bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-200 p-4 z-50">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-slate-900">Copilot Prompt</p>
+                <p className="text-sm font-semibold text-slate-900">Helix CoBrain</p>
                 <button className="p-1 hover:bg-slate-100 rounded" onClick={() => setCopilotOpen(false)}>
                   ✕
                 </button>
@@ -80,7 +80,7 @@ export default function DoctorNavigation() {
                     onChange={(e) => setPrompt(e.target.value)}
                     rows={4}
                     className="pr-10 resize-none"
-                    placeholder="Ask Copilot..."
+                    placeholder="Ask Helix CoBrain..."
                   />
                   <Mic className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
                 </div>
@@ -106,7 +106,7 @@ export default function DoctorNavigation() {
                       const data = await res.json()
                       setAnswer(typeof data.answer === 'string' ? data.answer : JSON.stringify(data.answer))
                     } catch (err: any) {
-                      setError(err.message || 'Failed to contact copilot')
+                      setError(err.message || 'Failed to contact Helix CoBrain')
                     } finally {
                       setLoading(false)
                     }
