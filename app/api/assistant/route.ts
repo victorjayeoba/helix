@@ -88,11 +88,22 @@ function getModel() {
   })
 }
 
-async function callInternalApi(path: string, init?: RequestInit) {
-  const baseUrl =
-    process.env.APP_BASE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'http://localhost:3000'
+async function callInternalApi(path: string, init?: RequestInit, request?: Request) {
+  let baseUrl: string
+  
+  if (request) {
+    // Use the request URL to determine the base URL
+    const url = new URL(request.url)
+    baseUrl = `${url.protocol}//${url.host}`
+  } else {
+    // Fallback to environment variables or localhost
+    baseUrl =
+      process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.APP_BASE_URL ||
+          process.env.NEXT_PUBLIC_APP_URL ||
+          'http://localhost:3000'
+  }
 
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
@@ -136,7 +147,9 @@ export async function POST(request: Request) {
       case 'fetch_patient_encounters': {
         const limitQuery = plan.limit ? `?limit=${plan.limit}` : ''
         retrievedData = await callInternalApi(
-          `/api/patients/${plan.patient_id}/encounters${limitQuery}`
+          `/api/patients/${plan.patient_id}/encounters${limitQuery}`,
+          undefined,
+          request
         )
         break
       }
@@ -144,8 +157,8 @@ export async function POST(request: Request) {
         const limit = plan.limit ?? 1
         const limitQuery = `?limit=${limit}`
         const [appointments, encounters] = await Promise.all([
-          callInternalApi(`/api/patients/${plan.patient_id}/appointments${limitQuery}`),
-          callInternalApi(`/api/patients/${plan.patient_id}/encounters${limitQuery}`)
+          callInternalApi(`/api/patients/${plan.patient_id}/appointments${limitQuery}`, undefined, request),
+          callInternalApi(`/api/patients/${plan.patient_id}/encounters${limitQuery}`, undefined, request)
         ])
 
         // Prefer encounter information if it exists
@@ -165,8 +178,8 @@ export async function POST(request: Request) {
         tomorrow.setDate(tomorrow.getDate() + 1)
 
         const [appointments, encounters] = await Promise.all([
-          callInternalApi(`/api/appointments`),
-          callInternalApi(`/api/patients/${plan.patient_id}/encounters`)
+          callInternalApi(`/api/appointments`, undefined, request),
+          callInternalApi(`/api/patients/${plan.patient_id}/encounters`, undefined, request)
         ])
 
         const todayAppointments = (appointments?.results || []).filter((appt: any) => {
@@ -189,7 +202,7 @@ export async function POST(request: Request) {
         retrievedData = await callInternalApi(`/api/ai-emr`, {
           method: 'POST',
           body: JSON.stringify(payload)
-        })
+        }, request)
         break
       }
       default: {
