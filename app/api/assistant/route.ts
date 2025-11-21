@@ -8,6 +8,7 @@ const plannerSchema = z.object({
   action: z.enum([
     'fetch_patient_encounters',
     'fetch_patient_appointments',
+    'fetch_today_schedule',
     'ai_emr_create_record'
   ]),
   patient_id: z.number({ coerce: true }),
@@ -45,6 +46,7 @@ const plannerPrompt = ChatPromptTemplate.fromMessages([
 Available actions:
 - fetch_patient_encounters: Use this to retrieve patient encounter history.
 - fetch_patient_appointments: Use this to retrieve patient appointments.
+- fetch_today_schedule: Use this to retrieve every appointment scheduled for today (all patients).
 - ai_emr_create_record: Use this to create/modify appointments or encounters via the AI EMR endpoint. Provide the doctor's instructions verbatim in payload.prompt whenever possible so the AI service can parse it. If the doctor specifies structured details (date, vitals, etc.), include them inside the prompt text as well.
 
 If the doctor's request cannot be fulfilled with the actions above, choose the closest option and explain the limitation in the "notes" field.`
@@ -152,6 +154,30 @@ export async function POST(request: Request) {
           appointments,
           recent_encounters: encounters,
           preferred_context: latestEncounter || appointments?.results?.[0] || null
+        }
+        break
+      }
+      case 'fetch_today_schedule': {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        const [appointments, encounters] = await Promise.all([
+          callInternalApi(`/api/appointments`),
+          callInternalApi(`/api/patients/${plan.patient_id}/encounters`)
+        ])
+
+        const todayAppointments = (appointments?.results || []).filter((appt: any) => {
+          const apptDate = new Date(appt.date)
+          return apptDate >= today && apptDate < tomorrow
+        })
+
+        retrievedData = {
+          schedule_date: today.toISOString().split('T')[0],
+          appointments_today: todayAppointments,
+          supplemental_encounters: encounters
         }
         break
       }
