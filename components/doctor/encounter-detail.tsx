@@ -37,10 +37,24 @@ export default function EncounterDetail({ encounterId, patientName }: EncounterD
   const isLoading = loadingIds.has(encounterId)
   const error = errorById[encounterId]
 
-  const displayValue = (value?: string | string[] | null) => {
+  const displayValue = (value?: string | string[] | Record<string, any> | null) => {
     if (Array.isArray(value)) {
       if (value.length === 0) return '-'
+      if (typeof value[0] === 'object') {
+        return value
+          .map((item) =>
+            Object.entries(item as Record<string, any>)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', ')
+          )
+          .join(' | ')
+      }
       return value.join(', ')
+    }
+    if (typeof value === 'object' && value !== null) {
+      return Object.entries(value)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')
     }
     if (value === null || value === undefined || `${value}`.trim() === '') {
       return '-'

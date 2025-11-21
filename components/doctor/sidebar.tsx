@@ -305,40 +305,40 @@ export default function DoctorSidebar({ collapsed = false, onToggleCollapse }: D
                       <HoverCardTrigger asChild>
                         <div
                           className="bg-blue-50 border border-blue-200 rounded-lg p-3 hover:bg-blue-100 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-start gap-3">
-                            <Clock className="w-4 h-4 text-helix-primary mt-0.5 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-slate-900 mb-1">
-                                {formatTime(appointment.date)}
-                              </div>
-                              <div className="text-sm text-slate-700 font-medium mb-1">
-                                {appointment.reason}
-                              </div>
-                              {appointment.summary && (
-                                <div className="text-xs text-slate-600 mt-1">
-                                  {appointment.summary}
-                                </div>
-                              )}
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className={`text-xs px-2 py-0.5 rounded ${
-                                  appointment.status === 'active' 
-                                    ? 'bg-blue-100 text-blue-700' 
-                                    : appointment.status === 'completed'
-                                    ? 'bg-green-100 text-green-700'
-                                    : appointment.status === 'cancelled'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-yellow-100 text-yellow-700'
-                                }`}>
-                                  {appointment.status}
-                                </span>
-                                <span className="text-xs text-slate-500">
-                                  Patient ID: {appointment.patient}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                  >
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-4 h-4 text-helix-primary mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 mb-1">
+                          {formatTime(appointment.date)}
                         </div>
+                        <div className="text-sm text-slate-700 font-medium mb-1">
+                          {appointment.reason}
+                        </div>
+                        {appointment.summary && (
+                          <div className="text-xs text-slate-600 mt-1">
+                            {appointment.summary}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-0.5 rounded ${
+                            appointment.status === 'active' 
+                              ? 'bg-blue-100 text-blue-700' 
+                              : appointment.status === 'completed'
+                              ? 'bg-green-100 text-green-700'
+                              : appointment.status === 'cancelled'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {appointment.status}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            Patient ID: {appointment.patient}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                       </HoverCardTrigger>
                       <HoverCardContent className="w-80">
                         <div className="space-y-4">
@@ -479,16 +479,16 @@ export default function DoctorSidebar({ collapsed = false, onToggleCollapse }: D
                   return (
                     <HoverCard key={patient.id} openDelay={200}>
                       <HoverCardTrigger asChild>
-                        <button
-                          onClick={() => handlePatientSelect(patient.id)}
-                          className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                            selectedPatientId === patient.id
-                              ? 'bg-slate-100 text-slate-900 font-medium'
-                              : 'text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          {fullName}
-                        </button>
+                    <button
+                      onClick={() => handlePatientSelect(patient.id)}
+                      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                        selectedPatientId === patient.id
+                          ? 'bg-slate-100 text-slate-900 font-medium'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {fullName}
+                    </button>
                       </HoverCardTrigger>
                       <HoverCardContent
                         side="right"

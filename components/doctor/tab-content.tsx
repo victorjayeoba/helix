@@ -6,6 +6,7 @@ import PatientFinder from './finder'
 import Messages from './messages'
 import PatientProfile from './patient-profile'
 import EncounterDetail from './encounter-detail'
+import DoctorCopilot from './copilot'
 
 export default function TabContent() {
   const { tabs, activeTabId } = useTabs()
@@ -35,6 +36,8 @@ export default function TabContent() {
           patientName={activeTab.data?.patientName}
         />
       )
+    case 'Copilot':
+      return <DoctorCopilot />
     default:
       return (
         <div className="flex-1 bg-white h-full p-6">

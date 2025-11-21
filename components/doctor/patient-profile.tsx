@@ -312,14 +312,14 @@ export default function PatientProfile({ patientId }: PatientProfileProps) {
                           <span>{appointment.reason}</span>
                         </div>
                         <div className="text-xs text-slate-500 mt-1">
-                          {formatDate(appointment.date)} at {formatTime(appointment.date)}
-                        </div>
-                        {appointment.summary && (
+                            {formatDate(appointment.date)} at {formatTime(appointment.date)}
+                          </div>
+                          {appointment.summary && (
                           <p className="text-sm text-slate-600 mt-2 line-clamp-2">
-                            {appointment.summary}
+                              {appointment.summary}
                           </p>
-                        )}
-                      </div>
+                          )}
+                        </div>
                       <div className="flex flex-col items-end gap-2">
                         {renderStatusBadge(appointment.status)}
                         <Button
