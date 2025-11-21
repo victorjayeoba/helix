@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "register-webhook": "node scripts/register-webhook.js",
+    "test-webhook": "node scripts/test-webhook.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
