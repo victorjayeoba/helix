@@ -119,7 +119,13 @@ export default function WhyHelixSection() {
   return (
     <section id="why" className="py-20 px-6 bg-slate-50 overflow-x-hidden">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-4xl font-bold text-slate-900 mb-4 text-center">Why Choose HELIX?</h2>
+        <h2 className="text-4xl font-bold text-slate-900 mb-4 text-center flex items-center justify-center flex-wrap">
+          Why Choose 
+          <span className="inline-flex items-center">
+            <img src="/helix.png" alt="H" className="h-10 w-auto" />
+            <span>ELIX?</span>
+          </span>
+        </h2>
         <p className="text-lg text-slate-600 text-center mb-16">Designed for both healthcare providers and patients</p>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20">
@@ -280,7 +286,7 @@ export default function WhyHelixSection() {
                 </div>
 
                 {/* Content Area Below Arc - Shows Active Feature */}
-                <div className="relative mt-16 min-h-[200px]">
+                <div className="relative mt-16 h-[240px]">
                   {group.features
                     .filter(f => {
                       // Show hovered feature if hovering, otherwise show selected feature
@@ -324,7 +330,7 @@ export default function WhyHelixSection() {
                       return (
                         <div 
                           key={feature.id} 
-                          className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 transition-all duration-300"
+                          className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 transition-all duration-300 h-full flex flex-col"
                         >
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -350,7 +356,7 @@ export default function WhyHelixSection() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-slate-600 leading-relaxed text-lg">{feature.description}</p>
+                          <p className="text-slate-600 leading-relaxed text-lg flex-1 overflow-y-auto">{feature.description}</p>
                         </div>
                       )
                     })}

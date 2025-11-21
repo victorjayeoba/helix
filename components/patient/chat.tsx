@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, Bot, User, Stethoscope, Menu } from 'lucide-react'
+import { Send, Bot, User, Stethoscope, Menu, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 
 type ChatMode = 'doctor' | 'ai'
@@ -31,38 +32,88 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
     }
   ])
 
-  const handleSendMessage = () => {
+  // Update greeting message when mode changes
+  const handleModeChange = (mode: ChatMode) => {
+    setChatMode(mode)
+    const greetingText = mode === 'ai' 
+      ? 'Hello! I\'m your AI Health Assistant. How can I help you today?'
+      : 'Hello! I\'m connecting you with a medical professional. Please describe your concern.'
+    setMessages([{
+      id: 1,
+      sender: mode,
+      text: greetingText,
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }])
+  }
+
+  const handleSendMessage = async () => {
     if (!message.trim()) return
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: messages.length + 1,
       sender: 'user',
       text: message,
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     }
 
-    setMessages([...messages, newMessage])
+    setMessages(prev => [...prev, userMessage])
+    const currentMessage = message
     setMessage('')
 
-    // Simulate response
-    setTimeout(() => {
-      const response: Message = {
-        id: messages.length + 2,
-        sender: chatMode,
-        text: chatMode === 'ai' 
-          ? 'I understand your concern. Based on what you\'ve described, I recommend...' 
-          : 'Thank you for reaching out. Let me review your symptoms...',
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    // For AI mode, get response from API
+    if (chatMode === 'ai') {
+      try {
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: currentMessage,
+            conversationHistory: messages.slice(-10) // Last 10 messages for context
+          })
+        })
+
+        const data = await response.json()
+
+        const aiResponse: Message = {
+          id: messages.length + 2,
+          sender: 'ai',
+          text: data.message || 'I apologize, but I could not generate a response. Please try again.',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+
+        setMessages(prev => [...prev, aiResponse])
+      } catch (error) {
+        console.error('Chat error:', error)
+        const errorMessage: Message = {
+          id: messages.length + 2,
+          sender: 'ai',
+          text: 'I apologize, but I encountered an error. Please try again.',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+        setMessages(prev => [...prev, errorMessage])
       }
-      setMessages(prev => [...prev, response])
-    }, 1000)
+    } else {
+      // For doctor mode, simulate response (real-time messaging would require WebSocket)
+      setTimeout(() => {
+        const response: Message = {
+          id: messages.length + 2,
+          sender: 'doctor',
+          text: 'Thank you for reaching out. A doctor will be with you shortly. In the meantime, please provide more details about your symptoms.',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+        setMessages(prev => [...prev, response])
+      }, 1000)
+    }
   }
 
   return (
     <div className="flex-1 bg-white h-full flex flex-col">
       {/* Mobile Header */}
       <div className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-helix-primary">Chat</h1>
+        <div className="flex items-center">
+          <img src="/helix.png" alt="Helix Logo" className="h-6 w-auto" />
+          <h1 className="text-xl font-bold text-helix-primary">ELIX</h1>
+        </div>
         <button
           onClick={onMobileMenuToggle}
           className="p-2 hover:bg-slate-100 rounded-lg transition"
@@ -71,45 +122,56 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
         </button>
       </div>
 
-      {/* Header */}
-      <div className="bg-helix-primary text-white px-4 md:px-6 py-3 md:py-4 border-b border-slate-200">
+      <div className="p-4 md:p-6 bg-slate-50">
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Search chat history or medical topics..."
+            className="pl-10 bg-white"
+          />
+        </div>
+
+        {/* Header */}
+        <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
         <h1 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">Medical Consultation</h1>
         
         {/* Mode Selection */}
-        <div className="grid grid-cols-2 gap-2 md:gap-3 max-w-2xl">
+        <div className="grid grid-cols-2 gap-2 md:gap-4 w-full">
           <button
-            onClick={() => setChatMode('doctor')}
+            onClick={() => handleModeChange('doctor')}
             className={`flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all border-2 ${
               chatMode === 'doctor'
                 ? 'bg-white text-helix-primary border-white shadow-lg'
                 : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
             }`}
           >
-            <Stethoscope className="w-5 h-5 md:w-6 md:h-6" />
+            <Stethoscope className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <div className="text-center sm:text-left">
-              <div className="font-semibold text-sm md:text-lg">Chat with Doctor</div>
-              <div className={`text-xs md:text-sm ${chatMode === 'doctor' ? 'text-helix-primary/70' : 'text-white/70'}`}>
+              <div className="font-semibold text-sm md:text-base">Chat with Doctor</div>
+              <div className={`text-xs ${chatMode === 'doctor' ? 'text-helix-primary/70' : 'text-white/70'} hidden sm:block`}>
                 Connect with a medical professional
               </div>
             </div>
           </button>
 
           <button
-            onClick={() => setChatMode('ai')}
+            onClick={() => handleModeChange('ai')}
             className={`flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all border-2 ${
               chatMode === 'ai'
                 ? 'bg-white text-helix-primary border-white shadow-lg'
                 : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
             }`}
           >
-            <Bot className="w-5 h-5 md:w-6 md:h-6" />
+            <Bot className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <div className="text-center sm:text-left">
-              <div className="font-semibold text-sm md:text-lg">AI Doctor</div>
-              <div className={`text-xs md:text-sm ${chatMode === 'ai' ? 'text-helix-primary/70' : 'text-white/70'}`}>
+              <div className="font-semibold text-sm md:text-base">AI Doctor</div>
+              <div className={`text-xs ${chatMode === 'ai' ? 'text-helix-primary/70' : 'text-white/70'} hidden sm:block`}>
                 Get instant AI-powered advice
               </div>
             </div>
           </button>
+        </div>
         </div>
       </div>
 
@@ -121,7 +183,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
             className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
           >
             {/* Avatar */}
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
               msg.sender === 'user' 
                 ? 'bg-helix-primary' 
                 : msg.sender === 'ai'
@@ -142,7 +204,9 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
               <div className={`rounded-2xl px-4 py-3 ${
                 msg.sender === 'user'
                   ? 'bg-helix-primary text-white rounded-tr-none'
-                  : 'bg-white border border-slate-200 text-slate-900 rounded-tl-none'
+                  : msg.sender === 'ai'
+                  ? 'bg-white border border-slate-200 text-slate-900 rounded-tl-none'
+                  : 'bg-white border border-helix-secondary text-slate-900 rounded-tl-none'
               }`}>
                 <p className="text-sm leading-relaxed">{msg.text}</p>
               </div>

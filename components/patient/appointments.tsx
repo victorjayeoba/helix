@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Calendar, Clock, User, MapPin, Plus, Search, Filter, Menu } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar, Clock, User, MapPin, Plus, Search, Filter, Menu, Grid3x3, List, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,58 +9,172 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/contexts/AuthContext'
+import { getDorraPatientId } from '@/lib/api/patient-mapping'
+import { toast } from 'sonner'
+import { Appointment } from '@/lib/api/appointments'
 
 interface PatientAppointmentsProps {
   onMobileMenuToggle?: () => void
 }
 
+type ViewMode = 'list' | 'grid'
+
+interface AppointmentGroup {
+  upcoming: Appointment[]
+  past: Appointment[]
+  cancelled: Appointment[]
+}
+
 export default function PatientAppointments({ onMobileMenuToggle }: PatientAppointmentsProps = {}) {
+  const { user } = useAuth()
   const [selectedTab, setSelectedTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-
-  const appointments = {
-    upcoming: [
-      {
-        id: 1,
-        doctor: 'Dr. Sarah Johnson',
-        specialty: 'General Practitioner',
-        date: '2025-11-22',
-        time: '10:00 AM',
-        location: 'Main Hospital, Room 203',
-        status: 'confirmed',
-        reason: 'Regular checkup'
-      },
-      {
-        id: 2,
-        doctor: 'Dr. Michael Chen',
-        specialty: 'Cardiologist',
-        date: '2025-11-25',
-        time: '2:30 PM',
-        location: 'Cardiology Center, 3rd Floor',
-        status: 'pending',
-        reason: 'Follow-up consultation'
-      }
-    ],
-    past: [
-      {
-        id: 3,
-        doctor: 'Dr. Emily Brown',
-        specialty: 'Dermatologist',
-        date: '2025-11-10',
-        time: '11:00 AM',
-        location: 'Skin Care Clinic',
-        status: 'completed',
-        reason: 'Skin consultation'
-      }
-    ],
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [appointments, setAppointments] = useState<AppointmentGroup>({
+    upcoming: [],
+    past: [],
     cancelled: []
+  })
+  const [loading, setLoading] = useState(true)
+  const [isBooking, setIsBooking] = useState(false)
+  const [dorraPatientId, setDorraPatientId] = useState<number | null>(null)
+  
+  // Booking form state
+  const [bookingForm, setBookingForm] = useState({
+    appointmentType: 'virtual',
+    specialty: '',
+    doctorName: '',
+    date: '',
+    time: '',
+    reasonType: '',
+    description: '',
+    questions: ''
+  })
+
+  // Fetch Dorra patient ID on mount
+  useEffect(() => {
+    const fetchPatientId = async () => {
+      if (user) {
+        const patientId = await getDorraPatientId(user.uid)
+        setDorraPatientId(patientId)
+      }
+    }
+    fetchPatientId()
+  }, [user])
+
+  // Fetch appointments
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!user || !dorraPatientId) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/patients/${dorraPatientId}/appointments`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments')
+        }
+
+        const data = await response.json()
+        const appointmentsList: Appointment[] = data.results || []
+        
+        // Categorize appointments
+        const now = new Date()
+        const categorized: AppointmentGroup = {
+          upcoming: appointmentsList.filter(apt => 
+            new Date(apt.date) > now && apt.status === 'active'
+          ),
+          past: appointmentsList.filter(apt => 
+            apt.status === 'completed' || new Date(apt.date) < now
+          ),
+          cancelled: []
+        }
+        
+        setAppointments(categorized)
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+        toast.error('Failed to load appointments')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAppointments()
+  }, [user, dorraPatientId])
+
+  // Handle appointment booking
+  const handleBookAppointment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!dorraPatientId) {
+      toast.error('Patient profile not found. Please complete your profile.')
+      return
+    }
+
+    if (!bookingForm.specialty || !bookingForm.date || !bookingForm.time) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    setIsBooking(true)
+
+    try {
+      const response = await fetch('/api/appointments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: dorraPatientId,
+          specialty: bookingForm.specialty,
+          date: bookingForm.date,
+          time: bookingForm.time,
+          reason: bookingForm.reasonType,
+          type: bookingForm.appointmentType,
+          description: bookingForm.description,
+          doctorName: bookingForm.doctorName
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Appointment requested successfully! 🎉')
+        setBookingDialogOpen(false)
+        // Reset form
+        setBookingForm({
+          appointmentType: 'virtual',
+          specialty: '',
+          doctorName: '',
+          date: '',
+          time: '',
+          reasonType: '',
+          description: '',
+          questions: ''
+        })
+        // Refresh appointments
+        window.location.reload()
+      } else {
+        throw new Error(data.message || 'Failed to book appointment')
+      }
+    } catch (error: any) {
+      console.error('Error booking appointment:', error)
+      toast.error(error.message || 'Failed to book appointment')
+    } finally {
+      setIsBooking(false)
+    }
   }
 
   return (
     <div className="flex-1 bg-white h-full overflow-y-auto">
       {/* Mobile Header */}
       <div className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-helix-primary">Appointments</h1>
+        <div className="flex items-center">
+          <img src="/helix.png" alt="Helix Logo" className="h-6 w-auto" />
+          <h1 className="text-xl font-bold text-helix-primary">ELIX</h1>
+        </div>
         <button
           onClick={onMobileMenuToggle}
           className="p-2 hover:bg-slate-100 rounded-lg transition"
@@ -69,8 +183,18 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
         </button>
       </div>
 
-      {/* Header */}
-      <div className="bg-helix-primary text-white px-4 md:px-6 py-4 md:py-6">
+      <div className="p-4 md:p-6">
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Search appointments by doctor, date, or specialty..."
+            className="pl-10 bg-white"
+          />
+        </div>
+
+        {/* Header */}
+        <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-semibold">My Appointments</h1>
@@ -78,7 +202,7 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
           </div>
           <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-white text-helix-primary hover:bg-slate-100">
+              <Button className="bg-white/10 border-white/20 text-white hover:bg-white/20 border-2">
                 <Plus className="w-4 h-4 mr-2" />
                 Book Appointment
               </Button>
@@ -90,20 +214,30 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                   Fill in the details to schedule your appointment
                 </DialogDescription>
               </DialogHeader>
-              <form className="space-y-4 mt-4">
+              <form onSubmit={handleBookAppointment} className="space-y-4 mt-4">
                 {/* Appointment Type - Virtual or Physical */}
                 <div className="space-y-2">
                   <Label>Appointment Type</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      className="px-4 py-3 border-2 border-helix-primary bg-helix-primary text-white rounded-lg font-medium transition hover:bg-helix-secondary hover:border-helix-secondary"
+                      onClick={() => setBookingForm({...bookingForm, appointmentType: 'virtual'})}
+                      className={`px-4 py-3 border-2 rounded-lg font-medium transition ${
+                        bookingForm.appointmentType === 'virtual'
+                          ? 'border-helix-primary bg-helix-primary text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-helix-primary'
+                      }`}
                     >
                       Virtual
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-3 border-2 border-slate-300 bg-white text-slate-700 rounded-lg font-medium transition hover:border-helix-primary hover:bg-helix-light"
+                      onClick={() => setBookingForm({...bookingForm, appointmentType: 'physical'})}
+                      className={`px-4 py-3 border-2 rounded-lg font-medium transition ${
+                        bookingForm.appointmentType === 'physical'
+                          ? 'border-helix-primary bg-helix-primary text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-helix-primary'
+                      }`}
                     >
                       Physical
                     </button>
@@ -111,52 +245,68 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="specialty">Specialty</Label>
-                  <Select>
+                  <Label htmlFor="specialty">Specialty *</Label>
+                  <Select value={bookingForm.specialty} onValueChange={(value) => setBookingForm({...bookingForm, specialty: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select specialty" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="general">General Practitioner</SelectItem>
-                      <SelectItem value="cardiology">Cardiology</SelectItem>
-                      <SelectItem value="dermatology">Dermatology</SelectItem>
-                      <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                      <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                      <SelectItem value="General Practitioner">General Practitioner</SelectItem>
+                      <SelectItem value="Cardiology">Cardiology</SelectItem>
+                      <SelectItem value="Dermatology">Dermatology</SelectItem>
+                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                      <SelectItem value="Orthopedics">Orthopedics</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="doctor">Preferred Doctor (Optional)</Label>
-                  <Input id="doctor" placeholder="Search for a doctor" />
+                  <Input 
+                    id="doctor" 
+                    placeholder="Search for a doctor"
+                    value={bookingForm.doctorName}
+                    onChange={(e) => setBookingForm({...bookingForm, doctorName: e.target.value})}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input id="date" type="date" />
+                    <Label htmlFor="date">Date *</Label>
+                    <Input 
+                      id="date" 
+                      type="date"
+                      value={bookingForm.date}
+                      onChange={(e) => setBookingForm({...bookingForm, date: e.target.value})}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="time">Time</Label>
-                    <Input id="time" type="time" />
+                    <Label htmlFor="time">Time *</Label>
+                    <Input 
+                      id="time" 
+                      type="time"
+                      value={bookingForm.time}
+                      onChange={(e) => setBookingForm({...bookingForm, time: e.target.value})}
+                    />
                   </div>
                 </div>
 
                 {/* Appointment Reason Type */}
                 <div className="space-y-2">
                   <Label htmlFor="reason-type">Reason for Appointment</Label>
-                  <Select>
+                  <Select value={bookingForm.reasonType} onValueChange={(value) => setBookingForm({...bookingForm, reasonType: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select reason" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="followup">Follow-up Visit</SelectItem>
-                      <SelectItem value="checkup">Regular Checkup</SelectItem>
-                      <SelectItem value="prescription">Prescription Refill</SelectItem>
-                      <SelectItem value="test-results">Discuss Test Results</SelectItem>
-                      <SelectItem value="emergency">Urgent/Emergency</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="Consultation">Consultation</SelectItem>
+                      <SelectItem value="Follow-up Visit">Follow-up Visit</SelectItem>
+                      <SelectItem value="Regular Checkup">Regular Checkup</SelectItem>
+                      <SelectItem value="Prescription Refill">Prescription Refill</SelectItem>
+                      <SelectItem value="Discuss Test Results">Discuss Test Results</SelectItem>
+                      <SelectItem value="Urgent/Emergency">Urgent/Emergency</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -168,6 +318,8 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                     id="description"
                     placeholder="Describe your symptoms, concerns, or reason for visit in detail..."
                     rows={3}
+                    value={bookingForm.description}
+                    onChange={(e) => setBookingForm({...bookingForm, description: e.target.value})}
                   />
                 </div>
 
@@ -178,32 +330,61 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                     id="questions"
                     placeholder="List any specific questions you'd like to ask the doctor during your appointment..."
                     rows={3}
+                    value={bookingForm.questions}
+                    onChange={(e) => setBookingForm({...bookingForm, questions: e.target.value})}
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-helix-primary">
-                  Submit Request
+                <Button type="submit" className="w-full bg-helix-primary" disabled={isBooking}>
+                  {isBooking ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Booking...
+                    </>
+                  ) : (
+                    'Submit Request'
+                  )}
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
+        </div>
       </div>
 
       <div className="p-4 md:p-6">
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 mb-4 md:mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search appointments..."
-              className="pl-10"
-            />
+        {/* Filter and View Options */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 mb-4 md:mb-6 justify-end">
+          <div className="flex gap-2">
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-helix-primary text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-helix-primary text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Grid view"
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+            </div>
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
           </div>
-          <Button variant="outline">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
         </div>
 
         {/* Tabs */}
@@ -240,10 +421,17 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
           </button>
         </div>
 
-        {/* Appointments List */}
-        <div className="space-y-4">
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-helix-primary" />
+          </div>
+        ) : (
+          <>
+        {/* Appointments List/Grid */}
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
           {appointments[selectedTab].length === 0 ? (
-            <Card>
+            <Card className={`rounded-xl ${viewMode === 'grid' ? 'md:col-span-2' : ''}`}>
               <CardContent className="py-12">
                 <div className="text-center text-slate-500">
                   <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -252,70 +440,133 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
               </CardContent>
             </Card>
           ) : (
-            appointments[selectedTab].map((appointment) => (
-              <Card key={appointment.id} className="hover:shadow-md transition-shadow">
+            appointments[selectedTab].map((appointment) => {
+              const appointmentDate = new Date(appointment.date)
+              const formattedDate = appointmentDate.toLocaleDateString()
+              const formattedTime = appointmentDate.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })
+              
+              return (
+              <Card key={appointment.id} className="rounded-xl hover:shadow-md transition-shadow">
                 <CardContent className="p-4 md:p-6">
-                  <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                    <div className="flex gap-4">
-                      <div className="w-14 h-14 bg-helix-primary rounded-full flex items-center justify-center shrink-0">
-                        <User className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-slate-900 mb-1">
-                          {appointment.doctor}
-                        </h3>
-                        <p className="text-sm text-slate-600 mb-3">{appointment.specialty}</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{appointment.date}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Clock className="w-4 h-4" />
-                            <span>{appointment.time}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-600 md:col-span-2">
-                            <MapPin className="w-4 h-4" />
-                            <span>{appointment.location}</span>
-                          </div>
+                  {viewMode === 'list' ? (
+                    <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                      <div className="flex gap-4">
+                        <div className="w-14 h-14 bg-helix-primary rounded-full flex items-center justify-center shrink-0">
+                          <User className="w-7 h-7 text-white" />
                         </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-slate-900 mb-1">
+                            Appointment
+                          </h3>
+                          <p className="text-sm text-slate-600 mb-3">{appointment.reason || 'General consultation'}</p>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div className="flex items-center gap-2 text-slate-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formattedDate}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-600">
+                              <Clock className="w-4 h-4" />
+                              <span>{formattedTime}</span>
+                            </div>
+                          </div>
 
-                        <div className="mt-3">
-                          <span className="text-sm text-slate-600">Reason: </span>
-                          <span className="text-sm text-slate-900">{appointment.reason}</span>
+                          {appointment.summary && (
+                            <div className="mt-3">
+                              <span className="text-sm text-slate-600">Summary: </span>
+                              <span className="text-sm text-slate-900">{appointment.summary}</span>
+                            </div>
+                          )}
                         </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-3">
+                        <span className={`px-3 py-1 rounded text-xs font-medium ${
+                          appointment.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : appointment.status === 'completed'
+                            ? 'bg-slate-100 text-slate-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                        </span>
+
+                        {selectedTab === 'upcoming' && (
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              Reschedule
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between">
+                        <div className="w-14 h-14 bg-helix-primary rounded-full flex items-center justify-center shrink-0">
+                          <User className="w-7 h-7 text-white" />
+                        </div>
+                        <span className={`px-3 py-1 rounded text-xs font-medium ${
+                          appointment.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : appointment.status === 'completed'
+                            ? 'bg-slate-100 text-slate-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold text-lg text-slate-900 mb-1">
+                          Appointment
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-3">{appointment.reason || 'General consultation'}</p>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Calendar className="w-4 h-4" />
+                          <span>{formattedDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{formattedTime}</span>
+                        </div>
+                      </div>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <span className={`px-3 py-1 rounded text-xs font-medium ${
-                        appointment.status === 'confirmed'
-                          ? 'bg-green-100 text-green-700'
-                          : appointment.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                      </span>
+                      {appointment.summary && (
+                        <div className="pt-2">
+                          <span className="text-xs text-slate-600">Summary: </span>
+                          <span className="text-sm text-slate-900">{appointment.summary}</span>
+                        </div>
+                      )}
 
                       {selectedTab === 'upcoming' && (
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                        <div className="flex gap-2 pt-2">
+                          <Button variant="outline" size="sm" className="flex-1">
                             Reschedule
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
                             Cancel
                           </Button>
                         </div>
                       )}
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-            ))
+            )})
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   )

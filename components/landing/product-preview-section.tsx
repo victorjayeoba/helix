@@ -26,7 +26,7 @@ export default function ProductPreviewSection() {
                   <div className="h-3 bg-slate-200 rounded w-5/6"></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-helix-light rounded-lg p-4 border-l-4 border-helix-green">
+                  <div className="bg-helix-light rounded-lg p-4 border-l-4 border-helix-secondary">
                     <div className="text-sm text-slate-600">Upcoming Appointments</div>
                     <div className="text-2xl font-bold text-helix-primary">12</div>
                   </div>
@@ -37,12 +37,12 @@ export default function ProductPreviewSection() {
                 </div>
               </div>
               
-              <div className="bg-slate-100 rounded-lg p-4 space-y-3 border-l-4 border-helix-green">
+              <div className="bg-slate-100 rounded-lg p-4 space-y-3 border-l-4 border-helix-primary">
                 <div className="text-xs font-bold text-slate-600 uppercase">AI Assistant</div>
                 <div className="space-y-2">
                   <div className="h-2 bg-slate-200 rounded w-full"></div>
                   <div className="h-2 bg-slate-200 rounded w-5/6"></div>
-                  <div className="h-2 bg-helix-green rounded-full w-3/4 opacity-50"></div>
+                  <div className="h-2 bg-helix-secondary rounded-full w-3/4 opacity-50"></div>
                 </div>
                 <div className="text-xs text-slate-600 pt-2">Processing...</div>
               </div>
@@ -54,7 +54,7 @@ export default function ProductPreviewSection() {
                 <ArrowRight className="w-6 h-6" />
                 <div className="w-8 h-8 rounded-full bg-helix-primary text-white flex items-center justify-center text-sm font-bold">2</div>
                 <ArrowRight className="w-6 h-6" />
-                <div className="w-8 h-8 rounded-full bg-helix-green text-white flex items-center justify-center text-sm font-bold">3</div>
+                <div className="w-8 h-8 rounded-full bg-helix-secondary text-white flex items-center justify-center text-sm font-bold">3</div>
               </div>
             </div>
             <p className="text-center text-sm text-slate-600">AI → Structured Records → Better Patient Care</p>

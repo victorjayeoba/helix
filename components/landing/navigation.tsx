@@ -96,8 +96,9 @@ export default function Navigation({ showScrollProgress = false }: NavigationPro
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl md:text-2xl font-bold text-helix-primary hover:opacity-80 transition">
-            HELIX
+          <Link href="/" className="flex items-center hover:opacity-80 transition">
+            <img src="/helix.png" alt="Helix Logo" className="h-8 w-auto" />
+            <span className="text-xl md:text-2xl font-bold text-helix-primary">ELIX</span>
           </Link>
           
           {/* Desktop Navigation */}

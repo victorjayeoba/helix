@@ -7,7 +7,7 @@
   /* HELIX Medical Theme */
   --helix-primary: #0D4C73;
   --helix-secondary: #1A6FA1;
-  --helix-green: #2FAF78;
+  --helix-accent: #1A6FA1; /* Using secondary as accent instead of green */
   --helix-light: #F5F7FA;
   --helix-border: #E9EDF2;
   
@@ -23,7 +23,7 @@
   --secondary-foreground: #1A1A1A;
   --muted: oklch(0.97 0 0);
   --muted-foreground: #475569;
-  --accent: var(--helix-green);
+  --accent: var(--helix-accent);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
@@ -32,7 +32,7 @@
   --ring: var(--helix-primary);
   --chart-1: var(--helix-primary);
   --chart-2: var(--helix-secondary);
-  --chart-3: var(--helix-green);
+  --chart-3: var(--helix-secondary);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
@@ -123,7 +123,7 @@
   /* HELIX Theme Colors */
   --color-helix-primary: var(--helix-primary);
   --color-helix-secondary: var(--helix-secondary);
-  --color-helix-green: var(--helix-green);
+  --color-helix-accent: var(--helix-accent);
   --color-helix-light: var(--helix-light);
   --color-helix-border: var(--helix-border);
 }
@@ -157,12 +157,12 @@
   @apply bg-helix-secondary;
 }
 
-.text-helix-green {
-  @apply text-helix-green;
+.text-helix-accent {
+  @apply text-helix-accent;
 }
 
-.bg-helix-green {
-  @apply bg-helix-green;
+.bg-helix-accent {
+  @apply bg-helix-accent;
 }
 
 .bg-helix-light {

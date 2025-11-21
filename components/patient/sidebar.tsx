@@ -69,27 +69,17 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-helix-primary">HELIX</h1>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img src="/helix.png" alt="Helix Logo" className="h-8 w-auto" />
+                  <h1 className="text-2xl font-bold text-helix-primary">ELIX</h1>
+                </div>
                 <button
                   onClick={onMobileToggle}
                   className="p-2 hover:bg-slate-100 rounded-lg transition"
                 >
                   <X className="w-5 h-5 text-slate-600" />
                 </button>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-helix-primary rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-slate-900 truncate">
-                    {userData?.displayName || 'Patient'}
-                  </h2>
-                  <p className="text-xs text-slate-500 truncate">
-                    {user?.email}
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -141,13 +131,28 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200">
+            <div className="p-4 border-t border-slate-200 space-y-3">
+              {/* User Info */}
+              <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl">
+                <div className="w-10 h-10 bg-helix-primary rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold text-sm text-slate-900 truncate">
+                    {userData?.displayName || 'Patient'}
+                  </h2>
+                  <p className="text-xs text-slate-500 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
+
               <button
                 onClick={() => {
                   setActiveView('notifications')
                   onMobileToggle && onMobileToggle()
                 }}
-                className="w-full mb-2 px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 transition-colors relative"
+                className="w-full px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 transition-colors relative"
               >
                 <Bell className="w-5 h-5" />
                 <span className="font-medium">Notifications</span>
@@ -233,26 +238,16 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-helix-primary">HELIX</h1>
+          <div className="flex items-center">
+            <img src="/helix.png" alt="Helix Logo" className="h-8 w-auto" />
+            <h1 className="text-2xl font-bold text-helix-primary">ELIX</h1>
+          </div>
           <button
             onClick={onToggleCollapse}
             className="p-2 hover:bg-slate-100 rounded-lg transition"
           >
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-helix-primary rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-slate-900 truncate">
-              {userData?.displayName || 'Patient'}
-            </h2>
-            <p className="text-xs text-slate-500 truncate">
-              {user?.email}
-            </p>
-          </div>
         </div>
       </div>
 
@@ -301,10 +296,25 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-200 space-y-3">
+        {/* User Info */}
+        <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl">
+          <div className="w-10 h-10 bg-helix-primary rounded-full flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-sm text-slate-900 truncate">
+              {userData?.displayName || 'Patient'}
+            </h2>
+            <p className="text-xs text-slate-500 truncate">
+              {user?.email}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={() => setActiveView('notifications')}
-          className="w-full mb-2 px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 transition-colors relative"
+          className="w-full px-4 py-3 rounded-lg flex items-center gap-3 text-slate-600 hover:bg-slate-50 transition-colors relative"
         >
           <Bell className="w-5 h-5" />
           <span className="font-medium">Notifications</span>

@@ -9,13 +9,16 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { getFirestore, setDoc, doc } from 'firebase/firestore'
+import { storeDorraPatientMapping } from '@/lib/api/patient-mapping'
 
 export default function CompleteProfilePage() {
   const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
 
   const [formData, setFormData] = useState({
     // Basic Info
@@ -66,24 +69,94 @@ export default function CompleteProfilePage() {
   }
 
   const handleSubmit = async () => {
-    // In a real app, save to Firestore
+    if (!user) {
+      toast.error('You must be logged in to complete your profile')
+      return
+    }
+
+    setIsSubmitting(true)
+
     try {
-      if (user) {
-        localStorage.setItem(`profile-complete-${user.uid}`, 'completed')
-        // Here you would save formData to Firestore
-        console.log('Saving profile data:', formData)
+      // Step 1: Extract name from user data or formData
+      const displayName = userData?.displayName || user.displayName || ''
+      const nameParts = displayName.split(' ')
+      const firstName = nameParts[0] || 'User'
+      const lastName = nameParts.slice(1).join(' ') || ''
+
+      // Step 2: Prepare allergies array
+      const allergiesArray = formData.allergies
+        ? formData.allergies.split(',').map(a => a.trim()).filter(a => a.length > 0)
+        : []
+
+      // Step 3: Create patient in Dorra API
+      console.log('📤 Creating patient in Dorra API...')
+      const createResponse = await fetch('/api/patients/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email: user.email,
+          phone_number: formData.phone || null,
+          date_of_birth: formData.dateOfBirth || null,
+          gender: formData.gender || null,
+          address: formData.address || null,
+          allergies: allergiesArray
+        })
+      })
+
+      const createData = await createResponse.json()
+
+      if (!createData.status || !createData.id) {
+        throw new Error(createData.message || 'Failed to create patient profile')
       }
-      toast.success('Profile completed successfully!')
+
+      const dorraPatientId = createData.id
+      console.log(`✅ Patient created with ID: ${dorraPatientId}`)
+
+      // Step 4: Store mapping in Firestore
+      await storeDorraPatientMapping(user.uid, dorraPatientId)
+
+      // Step 5: Store additional profile data in Firestore
+      const db = getFirestore()
+      await setDoc(doc(db, 'patientProfiles', user.uid), {
+        dorraPatientId,
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        height: formData.height,
+        weight: formData.weight,
+        bloodType: formData.bloodType,
+        allergies: allergiesArray,
+        chronicConditions: formData.chronicConditions,
+        currentMedications: formData.currentMedications,
+        emergencyContact: {
+          name: formData.emergencyName,
+          relationship: formData.emergencyRelationship,
+          phone: formData.emergencyPhone
+        },
+        completedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+
+      // Step 6: Mark profile as complete
+      localStorage.setItem(`profile-complete-${user.uid}`, 'completed')
+
+      toast.success('Profile completed successfully! 🎉')
       router.push('/patient-dashboard')
-    } catch (error) {
-      toast.error('Failed to save profile')
+    } catch (error: any) {
+      console.error('❌ Error completing profile:', error)
+      toast.error(error.message || 'Failed to save profile. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const totalSteps = 4
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-helix-primary to-helix-secondary flex items-center justify-center p-6">
+    <div className="min-h-screen bg-linear-to-br from-helix-primary to-helix-secondary flex items-center justify-center p-6">
       <Card className="w-full max-w-2xl">
         <CardContent className="p-8">
           {/* Header */}
@@ -323,9 +396,22 @@ export default function CompleteProfilePage() {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} className="bg-helix-primary">
-                <Check className="w-4 h-4 mr-2" />
-                Complete Profile
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting}
+                className="bg-helix-primary"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating Profile...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Complete Profile
+                  </>
+                )}
               </Button>
             )}
           </div>
