@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
+import { API_KEY, API_BASE } from '@/lib/api/config'
 
-const API_KEY = "1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM"
-const WEBHOOK_REGISTER_URL = "https://hackathon-api.aheadafrica.org/v1/auth/webhook/register"
+const WEBHOOK_REGISTER_URL = `${API_BASE}/auth/webhook/register`
 
 /**
  * Register a webhook URL with the PharmaVigillance API

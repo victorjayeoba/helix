@@ -10,13 +10,22 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1006418972324
 NEXT_PUBLIC_FIREBASE_APP_ID=1:1006418972324:web:e468e5843a38a828002031
 NEXT_PUBLIC_GEMINI_API_KEY=PASTE_YOUR_GEMINI_KEY_HERE
 
+# EMR API Configuration
+EMR_API_KEY=1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM
+EMR_API_BASE_URL=https://hackathon-api.aheadafrica.org/v1
+
+# Production URL (for webhooks)
+PRODUCTION_URL=https://helixhq.vercel.app
+
 =================================================
 STEPS:
 1. Create a new file called ".env.local" in the root folder
 2. Copy everything above (from NEXT_PUBLIC_FIREBASE... to the end)
 3. Replace "PASTE_YOUR_GEMINI_KEY_HERE" with your actual Gemini API key
-4. Save the file
-5. Restart your dev server: npm run dev
+4. Update EMR_API_KEY if you have a different API key
+5. Update EMR_API_BASE_URL if you're using a different API endpoint
+6. Save the file
+7. Restart your dev server: npm run dev
 
 Get Gemini Key from: https://makersuite.google.com/app/apikey
 =================================================

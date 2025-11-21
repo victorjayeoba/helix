@@ -1,11 +1,24 @@
 /**
  * Script to register webhook with PharmaVigillance API
  * Usage: node scripts/register-webhook.js
+ * 
+ * Requires environment variables:
+ * - EMR_API_KEY: Your API token
+ * - EMR_API_BASE_URL: Base URL for the API (defaults to hackathon API)
+ * - PRODUCTION_URL: Your production webhook URL (defaults to helixhq.vercel.app)
  */
 
-const API_KEY = "1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM"
-const WEBHOOK_REGISTER_URL = "https://hackathon-api.aheadafrica.org/v1/auth/webhook/register"
-const PRODUCTION_URL = "https://helixhq.vercel.app"
+// Load environment variables if dotenv is available
+try {
+  require('dotenv').config()
+} catch (e) {
+  // dotenv not installed, will use fallback values or system env vars
+}
+
+const API_KEY = process.env.EMR_API_KEY || "1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM"
+const API_BASE = process.env.EMR_API_BASE_URL || "https://hackathon-api.aheadafrica.org/v1"
+const PRODUCTION_URL = process.env.PRODUCTION_URL || "https://helixhq.vercel.app"
+const WEBHOOK_REGISTER_URL = `${API_BASE}/auth/webhook/register`
 const WEBHOOK_URL = `${PRODUCTION_URL}/api/webhooks/pharmavigilance`
 
 async function registerWebhook() {

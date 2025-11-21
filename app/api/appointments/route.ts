@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
+import { API_KEY, API_BASE } from '@/lib/api/config'
 
-const API_KEY = "1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM"
-const API_URL = "https://hackathon-api.aheadafrica.org/v1/appointments"
+const API_URL = `${API_BASE}/appointments`
 
 export async function GET() {
   try {

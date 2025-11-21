@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
+import { API_KEY, API_BASE } from '@/lib/api/config'
 
-const API_KEY = "1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM"
-const WEBHOOK_TEST_URL = "https://hackathon-api.aheadafrica.org/v1/auth/webhook/test"
+const WEBHOOK_TEST_URL = `${API_BASE}/auth/webhook/test`
 
 /**
  * Test webhook by triggering a sample event
