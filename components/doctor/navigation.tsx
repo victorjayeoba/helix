@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown'
 const navTabs = [
   'Calendar',
   'Finder',
+  'Appointments',
   'Messages',
   'Copilot'
 ]
@@ -27,6 +28,7 @@ export default function DoctorNavigation() {
     const labelMap: Record<string, string> = {
       'Calendar': 'Calendar',
       'Finder': 'Patient Finder',
+      'Appointments': 'Appointments',
       'Messages': 'Message Center',
       'Copilot': 'Doctor Copilot'
     }

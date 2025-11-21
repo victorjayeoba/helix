@@ -3,6 +3,7 @@
 import { useTabs } from '@/contexts/TabContext'
 import DoctorSchedule from './schedule'
 import PatientFinder from './finder'
+import AppointmentsList from './appointments'
 import Messages from './messages'
 import PatientProfile from './patient-profile'
 import EncounterDetail from './encounter-detail'
@@ -25,6 +26,8 @@ export default function TabContent() {
       return <DoctorSchedule />
     case 'Finder':
       return <PatientFinder />
+    case 'Appointments':
+      return <AppointmentsList />
     case 'Messages':
       return <Messages />
     case 'PatientProfile':
