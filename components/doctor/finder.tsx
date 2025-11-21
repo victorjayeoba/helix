@@ -1,22 +1,45 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { usePatientsStore } from '@/stores/patients-store'
 import { useTabs } from '@/contexts/TabContext'
+import { useToast } from '@/hooks/use-toast'
 
 export default function PatientFinder() {
-  const { patients, loading, fetchPatients } = usePatientsStore()
+  const { patients, loading, fetchPatients, deletePatient } = usePatientsStore()
   const { openTab } = useTabs()
+  const { toast } = useToast()
   const [searchTerm, setNameSearch] = useState('')
   const [phoneSearch, setPhoneSearch] = useState('')
   const [emailSearch, setEmailSearch] = useState('')
   const [dobSearch, setDobSearch] = useState('')
   const [externalIdSearch, setExternalIdSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const itemsPerPage = 10
+
+  const handleDelete = async (patientId: number, patientName: string) => {
+    try {
+      setDeletingId(patientId)
+      await deletePatient(patientId)
+      toast({
+        title: 'Patient deleted',
+        description: `${patientName} has been deleted successfully.`,
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error deleting patient',
+        description: error.message || 'Failed to delete patient',
+        variant: 'destructive',
+      })
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   useEffect(() => {
     fetchPatients()
@@ -120,18 +143,20 @@ export default function PatientFinder() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Email</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Date of Birth</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Patient ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {filteredPatients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                       No patients found
                     </td>
                   </tr>
                 ) : (
                   paginatedPatients.map((patient) => {
                     const fullName = `${patient.last_name}, ${patient.first_name}`
+                    const isDeleting = deletingId === patient.id
                     return (
                       <tr key={patient.id} className="hover:bg-slate-50">
                         <td className="px-4 py-3">
@@ -161,6 +186,39 @@ export default function PatientFinder() {
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-600">
                           {patient.id}
+                        </td>
+                        <td className="px-4 py-3">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={isDeleting}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Patient</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{fullName}</strong> (Patient ID: {patient.id})? 
+                                  This action cannot be undone and will permanently remove all patient data.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(patient.id, fullName)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                  disabled={isDeleting}
+                                >
+                                  {isDeleting ? 'Deleting...' : 'Delete'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </td>
                       </tr>
                     )

@@ -13,6 +13,7 @@ interface PatientsState {
   
   // Actions
   fetchPatients: (params?: { ordering?: string; page?: number; search?: string }, forceRefresh?: boolean) => Promise<void>
+  deletePatient: (id: number) => Promise<void>
   clearCache: () => void
   setCacheDuration: (duration: number) => void
 }
@@ -60,6 +61,34 @@ export const usePatientsStore = create<PatientsState>((set, get) => ({
         loading: false, 
         error: error.message || 'Failed to fetch patients' 
       })
+    }
+  },
+
+  deletePatient: async (id: number) => {
+    try {
+      const response = await fetch(`/api/patients/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to delete patient: ${response.statusText}`)
+      }
+
+      // Remove patient from local state
+      const state = get()
+      set({
+        patients: state.patients.filter(p => p.id !== id),
+        count: Math.max(0, state.count - 1)
+      })
+      
+      console.log(`✅ Patient ${id} deleted successfully`)
+    } catch (error: any) {
+      console.error('❌ Error deleting patient:', error)
+      throw error
     }
   },
 
