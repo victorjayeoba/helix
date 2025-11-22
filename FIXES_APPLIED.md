@@ -1,4 +1,4 @@
-# Fixes Applied - Patient Dashboard Issues
+# Fixes Applied - Patient Dashboard Issues 
 
 ## 🔧 Issues Fixed
 
