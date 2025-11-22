@@ -268,11 +268,25 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
             ) : upcomingAppointments.length > 0 ? (
               <div className="space-y-3">
                 {upcomingAppointments.map((appointment) => {
-                  const appointmentDate = new Date(appointment.date)
+                  // Parse date string and extract time components directly to avoid timezone conversion
+                  const parseAppointmentDateTime = (dateString: string) => {
+                    // Handle ISO format: '2025-11-20T09:00:00Z' or '2025-11-20T09:00:00'
+                    const dateTime = dateString.replace('Z', '') // Remove Z if present
+                    const [datePart, timePart] = dateTime.split('T')
+                    const [year, month, day] = datePart.split('-').map(Number)
+                    const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0]
+                    
+                    // Create date in local timezone (treat as local time, not UTC)
+                    const localDate = new Date(year, month - 1, day, hours, minutes)
+                    return localDate
+                  }
+                  
+                  const appointmentDate = parseAppointmentDateTime(appointment.date)
                   const formattedDate = appointmentDate.toLocaleDateString()
                   const formattedTime = appointmentDate.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
-                    minute: '2-digit' 
+                    minute: '2-digit',
+                    hour12: true
                   })
 
                   return (
