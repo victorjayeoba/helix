@@ -3,7 +3,7 @@
  * Maps Firebase Auth users to Dorra API patient IDs
  */
 
-import { getFirestore, getDoc, setDoc, doc } from 'firebase/firestore'
+import { getFirestore, getDoc, setDoc, doc, collection, query, where, limit, getDocs } from 'firebase/firestore'
 
 export interface PatientMapping {
   firebaseUid: string
@@ -62,5 +62,26 @@ export async function storeDorraPatientMapping(
 export async function hasDorraPatient(firebaseUid: string): Promise<boolean> {
   const patientId = await getDorraPatientId(firebaseUid)
   return patientId !== null
+}
+
+/**
+ * Get Firebase UID from Dorra patient ID (reverse lookup)
+ */
+export async function getFirebaseUidFromDorraPatientId(dorraPatientId: number): Promise<string | null> {
+  try {
+    const db = getFirestore()
+    const mappingsRef = collection(db, 'userMappings')
+    const q = query(mappingsRef, where('dorraPatientId', '==', dorraPatientId), limit(1))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0]
+      return doc.id // The document ID is the Firebase UID
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting Firebase UID from Dorra patient ID:', error)
+    return null
+  }
 }
 

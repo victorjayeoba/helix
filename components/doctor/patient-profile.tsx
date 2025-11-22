@@ -5,6 +5,8 @@ import { User, Mail, Phone, Calendar, MapPin, ClipboardList, FileText, RefreshCw
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { usePatientsStore } from '@/stores/patients-store'
 import { Appointment, deleteAppointment } from '@/lib/api/appointments'
 import { usePatientRecordsStore } from '@/stores/patient-records-store'
@@ -14,6 +16,8 @@ import { PatientTest } from '@/lib/api/tests'
 import { fetchEncounterById, EncounterDetail } from '@/lib/api/encounters'
 import { TestReportPDFDownload } from '@/components/patient/test-report-pdf'
 import { toast } from 'sonner'
+import { getFirebaseUidFromDorraPatientId } from '@/lib/api/patient-mapping'
+import { createNotification } from '@/lib/firebase/notifications'
 
 interface PatientProfileProps {
   patientId: number
@@ -40,6 +44,8 @@ export default function PatientProfile({ patientId }: PatientProfileProps) {
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [selectedTest, setSelectedTest] = useState<PatientTest | null>(null)
   const [testEncounterDetails, setTestEncounterDetails] = useState<EncounterDetail | null>(null)
   const [loadingTestEncounter, setLoadingTestEncounter] = useState(false)
@@ -543,32 +549,86 @@ export default function PatientProfile({ patientId }: PatientProfileProps) {
                   >
                     Mark as Completed
                   </Button>
-                  <AlertDialog>
+                  <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="outline"
                         className="w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => {
+                          setCancelReason('')
+                          setCancelDialogOpen(true)
+                        }}
                       >
                         Cancel Appointment
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="sm:max-w-md">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to cancel this appointment? This action cannot be undone.
+                          Are you sure you want to cancel this appointment? Please provide a reason for cancellation.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
+                      <div className="py-4">
+                        <Label htmlFor="cancel-reason" className="text-sm font-medium">
+                          Reason for Cancellation
+                        </Label>
+                        <Textarea
+                          id="cancel-reason"
+                          placeholder="e.g., Doctor unavailable, Emergency situation, Patient request..."
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          rows={3}
+                          className="mt-2"
+                        />
+                      </div>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => {
+                          setCancelReason('')
+                          setCancelDialogOpen(false)
+                        }}>
+                          Keep Appointment
+                        </AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700"
                           onClick={async () => {
+                            if (!cancelReason.trim()) {
+                              toast.error('Please provide a reason for cancellation')
+                              return
+                            }
+
                             try {
+                              // Cancel the appointment
                               await deleteAppointment(selectedAppointment.id)
+                              
+                              // Get patient's Firebase UID and send notification
+                              if (selectedAppointment.patient) {
+                                try {
+                                  const patientFirebaseUid = await getFirebaseUidFromDorraPatientId(selectedAppointment.patient)
+                                  if (patientFirebaseUid) {
+                                    await createNotification({
+                                      userId: patientFirebaseUid,
+                                      type: 'alert',
+                                      title: 'Appointment Cancelled',
+                                      message: `Your appointment scheduled for ${formatDate(selectedAppointment.date)} at ${formatTime(selectedAppointment.date)} has been cancelled. Reason: ${cancelReason}`,
+                                      read: false,
+                                      metadata: {
+                                        appointmentId: selectedAppointment.id,
+                                        reason: cancelReason
+                                      }
+                                    })
+                                  }
+                                } catch (notifError) {
+                                  console.error('Failed to create notification:', notifError)
+                                  // Don't fail the cancellation if notification fails
+                                }
+                              }
+
                               toast.success('Appointment cancelled successfully')
                               setAppointmentDialogOpen(false)
+                              setCancelDialogOpen(false)
                               setSelectedAppointment(null)
+                              setCancelReason('')
                               // Refresh appointments list
                               await fetchPatientAppointments(patientId, true)
                             } catch (error: any) {
