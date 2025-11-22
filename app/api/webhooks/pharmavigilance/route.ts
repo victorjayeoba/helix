@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server'
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase/config'
+import { createNotification } from '@/lib/firebase/notifications'
 
 /**
  * Webhook handler for PharmaVigillance API events
@@ -34,14 +37,56 @@ export async function POST(request: Request) {
         destination_url
       })
 
-      // TODO: Store this in your database or trigger notifications
-      // For now, we'll just log it and return success
+      // Create notifications for all doctors
+      try {
+        if (!db) {
+          console.error('❌ Firestore not initialized')
+        } else {
+          // Get all doctors from Firestore (users collection)
+          const usersRef = collection(db, 'users')
+          const doctorsQuery = query(usersRef, where('userType', '==', 'doctor'))
+          const doctorsSnapshot = await getDocs(doctorsQuery)
+          
+          if (doctorsSnapshot.empty) {
+            console.warn('⚠️ No doctors found in Firestore')
+          }
 
-      // You can add logic here to:
-      // - Store the interaction in your database
-      // - Send notifications to doctors
-      // - Update encounter records with interaction flags
-      // - Trigger alerts in the UI
+          const severityText = severity || 'Unknown'
+          const detailsText = details || 'No additional details available'
+          const resourceText = resource || 'Unknown resource'
+          
+          // Create notification for each doctor
+          const notificationPromises = doctorsSnapshot.docs.map(async (doc) => {
+            const doctorId = doc.id
+            const doctorData = doc.data()
+            const doctorName = doctorData.displayName || doctorData.email || 'Doctor'
+
+            await createNotification({
+              userId: doctorId,
+              type: 'drug-interaction',
+              title: `⚠️ Drug Interaction Alert - ${severityText} Severity`,
+              message: `Drug interaction detected in ${resourceText} (ID: ${resource_id}). ${detailsText}`,
+              read: false,
+              metadata: {
+                severity,
+                details,
+                resource,
+                resource_id,
+                destination_url,
+                timestamp: new Date().toISOString()
+              }
+            })
+
+            console.log(`✅ Notification created for doctor: ${doctorName} (${doctorId})`)
+          })
+
+          await Promise.all(notificationPromises)
+          console.log(`✅ Created ${doctorsSnapshot.docs.length} drug interaction notifications`)
+        }
+      } catch (notificationError: any) {
+        console.error('❌ Error creating notifications:', notificationError)
+        // Don't fail the webhook if notification creation fails
+      }
 
       return NextResponse.json(
         {

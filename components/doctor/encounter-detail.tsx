@@ -178,8 +178,8 @@ export default function EncounterDetail({ encounterId, patientName }: EncounterD
   }
 
   return (
-    <div className="flex-1 bg-slate-50 h-full flex flex-col">
-      <div className="bg-helix-primary text-white px-6 py-4 flex items-center justify-between">
+    <div className="flex-1 bg-slate-50 h-full flex flex-col overflow-hidden min-h-0">
+      <div className="bg-helix-primary text-white px-6 py-4 flex items-center justify-between shrink-0">
         <div>
           <p className="text-sm text-white/80 uppercase tracking-wide">#{encounter.id}</p>
           <h1 className="text-2xl font-semibold">
@@ -207,8 +207,8 @@ export default function EncounterDetail({ encounterId, patientName }: EncounterD
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
-        <div className="space-y-6">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <div className="bg-white border border-slate-200 rounded-lg p-4">

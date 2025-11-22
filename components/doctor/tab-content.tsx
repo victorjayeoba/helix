@@ -8,6 +8,7 @@ import Messages from './messages'
 import PatientProfile from './patient-profile'
 import EncounterDetail from './encounter-detail'
 import DoctorCoBrain from './copilot'
+import DoctorNotifications from './notifications'
 
 export default function TabContent() {
   const { tabs, activeTabId } = useTabs()
@@ -30,6 +31,8 @@ export default function TabContent() {
       return <AppointmentsList />
     case 'Messages':
       return <Messages />
+    case 'Notifications':
+      return <DoctorNotifications />
     case 'PatientProfile':
       return <PatientProfile patientId={activeTab.data?.patientId} />
     case 'EncounterDetail':

@@ -32,6 +32,7 @@ const navTabs = [
   'Finder',
   'Appointments',
   'Messages',
+  'Notifications',
   'CoBrain'
 ]
 

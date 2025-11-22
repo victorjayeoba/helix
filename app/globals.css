@@ -424,6 +424,33 @@ html, body {
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Pointer cursor for interactive elements */
+  button,
+  a,
+  [role="button"],
+  [role="link"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  label[for],
+  select,
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  
+  /* Ensure clickable elements show pointer on hover */
+  button:hover,
+  a:hover,
+  [role="button"]:hover,
+  [role="link"]:hover,
+  input[type="button"]:hover,
+  input[type="submit"]:hover,
+  input[type="reset"]:hover,
+  label[for]:hover,
+  select:hover {
+    cursor: pointer;
+  }
 }
 
 /* HELIX Custom Color Classes - Now using Tailwind theme colors */

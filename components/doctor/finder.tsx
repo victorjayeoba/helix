@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
@@ -88,10 +88,6 @@ export default function PatientFinder() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">Patient Finder</h1>
-          <Button className="bg-helix-primary hover:bg-helix-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Patient
-          </Button>
         </div>
 
         {/* Search Fields */}

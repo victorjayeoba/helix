@@ -14,7 +14,7 @@ import { db } from './config'
 
 export interface NotificationData {
   userId: string
-  type: 'appointment' | 'message' | 'alert' | 'success' | 'reminder'
+  type: 'appointment' | 'message' | 'alert' | 'success' | 'reminder' | 'drug-interaction'
   title: string
   message: string
   read: boolean

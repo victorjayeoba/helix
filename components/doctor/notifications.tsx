@@ -1,17 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, Calendar, MessageSquare, AlertCircle, CheckCircle, Clock, Menu, Loader2 } from 'lucide-react'
+import { Bell, Calendar, MessageSquare, AlertCircle, CheckCircle, Clock, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore'
-import { requestNotificationPermission, onMessageListener, storeFCMToken } from '@/lib/firebase/messaging'
 import { toast } from 'sonner'
-
-interface PatientNotificationsProps {
-  onMobileMenuToggle?: () => void
-}
 
 interface Notification {
   id: string
@@ -26,27 +21,10 @@ interface Notification {
   createdAt?: any
 }
 
-export default function PatientNotifications({ onMobileMenuToggle }: PatientNotificationsProps = {}) {
+export default function DoctorNotifications() {
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
-  const [fcmEnabled, setFcmEnabled] = useState(false)
-
-  // Request FCM permission on mount
-  useEffect(() => {
-    const setupFCM = async () => {
-      if (user) {
-        const token = await requestNotificationPermission()
-        if (token) {
-          await storeFCMToken(user.uid, token)
-          setFcmEnabled(true)
-          toast.success('Notifications enabled!')
-        }
-      }
-    }
-
-    setupFCM()
-  }, [user])
 
   // Listen for real-time notifications from Firestore
   useEffect(() => {
@@ -95,20 +73,6 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
 
     return () => unsubscribe()
   }, [user])
-
-  // Listen for foreground FCM messages
-  useEffect(() => {
-    if (fcmEnabled) {
-      onMessageListener()
-        .then((payload: any) => {
-          console.log('Received foreground message:', payload)
-          toast.success(payload.notification?.title || 'New notification', {
-            description: payload.notification?.body
-          })
-        })
-        .catch((err) => console.error('Failed to receive message:', err))
-    }
-  }, [fcmEnabled])
 
   // Helper functions
   const getIconForType = (type: string) => {
@@ -215,36 +179,22 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50">
-      {/* Mobile Header */}
-      <div className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
-          <img src="/helix.png" alt="Helix Logo" className="h-6 w-auto" />
-          <h1 className="text-xl font-bold text-helix-primary">ELIX</h1>
-        </div>
-        <button
-          onClick={onMobileMenuToggle}
-          className="p-2 hover:bg-slate-100 rounded-lg transition"
-        >
-          <Menu className="w-6 h-6 text-slate-600" />
-        </button>
-      </div>
-
       <div className="p-4 md:p-6 bg-slate-50">
         {/* Header */}
-        <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">Notifications</h1>
-            <p className="text-sm text-white/80">Stay updated on your health journey</p>
+        <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold mb-1">Notifications</h1>
+              <p className="text-sm text-white/80">Stay updated on important alerts and events</p>
+            </div>
+            <Button 
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 border-2"
+              onClick={markAllAsRead}
+              disabled={loading || notifications.every((n) => n.read)}
+            >
+              Mark all as read
+            </Button>
           </div>
-          <Button 
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20 border-2"
-            onClick={markAllAsRead}
-            disabled={loading || notifications.every((n) => n.read)}
-          >
-            Mark all as read
-          </Button>
-        </div>
         </div>
       </div>
 
@@ -255,34 +205,34 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
           </div>
         ) : (
           <>
-        {notifications.map((notification) => {
-          const Icon = notification.icon
-          return (
-            <Card
-              key={notification.id}
-              onClick={() => markAsRead(notification.id)}
-              className={`rounded-xl ${notification.read ? 'opacity-60' : 'border-2 border-helix-primary/20'} hover:shadow-md transition-shadow cursor-pointer`}
-            >
-              <CardContent className="p-4">
-                <div className="flex gap-4">
-                  <div className={`w-12 h-12 ${notification.bg} rounded-full flex items-center justify-center shrink-0`}>
-                    <Icon className={`w-6 h-6 ${notification.color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-semibold text-slate-900">{notification.title}</h3>
-                      {!notification.read && (
-                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-1.5"></span>
-                      )}
+            {notifications.map((notification) => {
+              const Icon = notification.icon
+              return (
+                <Card
+                  key={notification.id}
+                  onClick={() => markAsRead(notification.id)}
+                  className={`rounded-xl ${notification.read ? 'opacity-60' : 'border-2 border-helix-primary/20'} hover:shadow-md transition-shadow cursor-pointer`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <div className={`w-12 h-12 ${notification.bg} rounded-full flex items-center justify-center shrink-0`}>
+                        <Icon className={`w-6 h-6 ${notification.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1">
+                          <h3 className="font-semibold text-slate-900">{notification.title}</h3>
+                          {!notification.read && (
+                            <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-1.5"></span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-600 mb-2">{notification.message}</p>
+                        <p className="text-xs text-slate-500">{notification.time}</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-600 mb-2">{notification.message}</p>
-                    <p className="text-xs text-slate-500">{notification.time}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </>
         )}
 
