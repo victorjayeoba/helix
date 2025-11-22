@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Zap } from 'lucide-react'
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -91,6 +91,39 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
     }
   }
 
+  const handleQuickLogin = async (email: string, password: string, type: 'doctor' | 'patient') => {
+    setLoading(true)
+    setValue('userType', type)
+    setValue('email', email)
+    setValue('password', password)
+    
+    try {
+      const user = await signIn(email, password)
+      const userData = await getUserData(user.uid)
+      
+      // Check if user type matches
+      if (userData && userData.userType !== type) {
+        toast.error(`This account is registered as a ${userData.userType}. Please select the correct account type.`)
+        setLoading(false)
+        return
+      }
+      
+      toast.success('Signed in successfully!')
+      onOpenChange(false)
+      
+      // Redirect based on user type
+      if (type === 'doctor') {
+        router.push('/dashboard')
+      } else {
+        router.push('/patient-dashboard')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign in')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -125,6 +158,35 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
               >
                 Patient
               </button>
+            </div>
+          </div>
+
+          {/* Quick Login Buttons */}
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500 text-center">Quick Login (Demo Accounts)</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickLogin('victorjayeoba02@gmail.com', 'victorjayeoba', 'doctor')}
+                disabled={loading || googleLoading}
+                className="text-xs"
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                Quick Doctor
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickLogin('tasha@gmail.com', 'tasha@gmail.com', 'patient')}
+                disabled={loading || googleLoading}
+                className="text-xs"
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                Quick Patient
+              </Button>
             </div>
           </div>
 

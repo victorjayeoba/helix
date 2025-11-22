@@ -1,10 +1,22 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { User, Bot, Mic, MicOff } from 'lucide-react'
+import { User, Bot, Mic, MicOff, LogOut, Mail } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useTabs } from '@/contexts/TabContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { logOut } from '@/lib/firebase/auth'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import ReactMarkdown from 'react-markdown'
 
 // TypeScript declaration for Web Speech API
@@ -25,6 +37,8 @@ const navTabs = [
 
 export default function DoctorNavigation() {
   const { openTab } = useTabs()
+  const { user, userData } = useAuth()
+  const router = useRouter()
   const [copilotOpen, setCopilotOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,6 +46,16 @@ export default function DoctorNavigation() {
   const [answer, setAnswer] = useState<string | null>(null)
   const [isListening, setIsListening] = useState(false)
   const recognitionRef = useRef<any>(null)
+
+  const handleSignOut = async () => {
+    try {
+      await logOut()
+      toast.success('Signed out successfully')
+      router.push('/')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign out')
+    }
+  }
 
   // Initialize speech recognition
   useEffect(() => {
@@ -245,9 +269,34 @@ export default function DoctorNavigation() {
             </div>
           )}
 
-          <button className="p-2 hover:bg-slate-600 rounded-lg transition">
-            <User className="w-5 h-5 text-white" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 hover:bg-slate-600 rounded-lg transition">
+                <User className="w-5 h-5 text-white" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {userData?.displayName || 'Doctor'}
+                  </p>
+                  <p className="text-xs leading-none text-slate-500 flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    {user?.email || 'No email'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>

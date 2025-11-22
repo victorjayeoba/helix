@@ -13,7 +13,7 @@ export default function HeroSection() {
         <div className="flex flex-col gap-12">
           <div className="space-y-6 w-full text-center">
             <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-              AI-Powered Medical Records for African&nbsp;Clinics.
+              Agentic AI-Powered Medical Records for African&nbsp;Clinics.
             </h1>
             <p className="text-xl text-slate-600 leading-relaxed">
               Fast documentation. Smarter scheduling. Complete patient care.

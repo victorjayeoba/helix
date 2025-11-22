@@ -67,7 +67,7 @@ export default function WhyHelixSection() {
           id: 'appointments',
           icon: Calendar,
           title: "Smart Scheduling",
-          description: "Automated appointment management with intelligent reminders. Reduce no-shows and optimize your daily schedule with AI-powered scheduling suggestions.",
+          description: "Automated appointment management with intelligent reminders. Reduce no-shows and optimize your daily schedule with Agentic AI-powered scheduling suggestions.",
           angle: 100
         },
         {

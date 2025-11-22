@@ -59,7 +59,7 @@ export default function DoctorDashboard() {
 
   return (
     <TabProvider>
-      <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-slate-50 flex flex-col overflow-hidden" style={{ height: '100vh' }}>
         <DoctorNavigation />
         <TabBar />
         <div className="flex flex-1 overflow-hidden min-h-0">

@@ -68,7 +68,7 @@ export default function PatientDashboard() {
   }
 
   return (
-    <div className="h-screen bg-slate-50 flex overflow-hidden">
+    <div className="h-screen bg-slate-50 flex overflow-hidden" style={{ height: '100vh' }}>
       <PatientSidebar 
         activeView={activeView}
         setActiveView={setActiveView}

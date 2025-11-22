@@ -75,10 +75,17 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true)
     try {
-      await signInWithGoogle('patient')
+      const selectedUserType = userType || 'patient'
+      await signInWithGoogle(selectedUserType)
       toast.success('Account created successfully!')
       onOpenChange(false)
-      router.push('/patient-dashboard')
+      
+      // Redirect based on user type
+      if (selectedUserType === 'doctor') {
+        router.push('/dashboard')
+      } else {
+        router.push('/patient-dashboard')
+      }
     } catch (error: any) {
       if (error.message !== 'Sign-in cancelled') {
         toast.error(error.message || 'Failed to sign up with Google')
@@ -102,9 +109,12 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
               <button
                 type="button"
-                disabled
-                className="py-2.5 px-4 rounded-md font-medium text-sm transition-all bg-slate-200 text-slate-400 cursor-not-allowed opacity-50"
-                title="Doctor registration is currently disabled"
+                onClick={() => setValue('userType', 'doctor')}
+                className={`py-2.5 px-4 rounded-md font-medium text-sm transition-all ${
+                  userType === 'doctor'
+                    ? 'bg-white text-helix-primary shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
               >
                 Doctor
               </button>
@@ -120,9 +130,6 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
                 Patient
               </button>
             </div>
-            <p className="text-xs text-slate-500 text-center">
-              Currently accepting patient registrations only
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -258,9 +265,6 @@ export function SignUpDialog({ open, onOpenChange }: SignUpDialogProps) {
             )}
           </Button>
 
-          <p className="text-xs text-center text-slate-500 mt-2">
-            Google sign-in is for patients only
-          </p>
         </form>
       </DialogContent>
     </Dialog>

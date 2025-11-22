@@ -8,7 +8,7 @@ export default function Footer() {
               <img src="/helix.png" alt="Helix Logo" className="h-8 w-auto brightness-0 invert" />
               <div className="text-2xl font-bold">ELIX</div>
             </div>
-            <p className="text-slate-400 text-sm">AI-powered EMR for African healthcare</p>
+            <p className="text-slate-400 text-sm">Agentic AI-powered EMR for African healthcare</p>
           </div>
           <div>
             <h4 className="font-bold mb-4">Product</h4>
