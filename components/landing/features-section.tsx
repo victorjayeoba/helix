@@ -2,12 +2,12 @@ import { Zap, Users, FileText, TrendingUp, MapPin, Shield } from 'lucide-react'
 
 export default function FeaturesSection() {
   const features = [
-    { icon: Zap, title: "AI Documentation", desc: "Natural language to structured medical records" },
-    { icon: Users, title: "Smart Appointments", desc: "Automated scheduling and patient reminders" },
+    { icon: Zap, title: "Agentic AI Documentation", desc: "Agentic AI autonomously transforms natural language into structured medical records" },
+    { icon: Users, title: "Smart Appointments", desc: "Agentic AI-powered automated scheduling and intelligent patient reminders" },
     { icon: FileText, title: "Patient Management", desc: "Complete medical histories and easy access" },
     { icon: TrendingUp, title: "Test Tracking", desc: "Organize and monitor all test results" },
     { icon: MapPin, title: "Healthcare Locator", desc: "Route to available hospitals & pharmacies for your specific case" },
-    { icon: Shield, title: "AI Drug Safety", desc: "Rate safety & severity of drug combinations and prescriptions" },
+    { icon: Shield, title: "Agentic AI Drug Safety", desc: "Agentic AI analyzes and rates safety & severity of drug combinations" },
   ]
 
   return (
