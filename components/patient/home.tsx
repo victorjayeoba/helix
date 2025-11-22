@@ -19,6 +19,7 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [dorraPatientId, setDorraPatientId] = useState<number | null>(null)
+  const [nextAppointmentDate, setNextAppointmentDate] = useState<string>('Not scheduled')
 
   // Fetch Dorra patient ID and appointments
   useEffect(() => {
@@ -44,9 +45,30 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
             const now = new Date()
             const upcoming = appointments
               .filter(apt => new Date(apt.date) > now && apt.status === 'active')
-              .slice(0, 2) // Show only 2 most recent
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             
-            setUpcomingAppointments(upcoming)
+            setUpcomingAppointments(upcoming.slice(0, 2)) // Show only 2 most recent
+
+            // Set next appointment date for the health card
+            if (upcoming.length > 0) {
+              const nextDate = new Date(upcoming[0].date)
+              const today = new Date()
+              const diffTime = nextDate.getTime() - today.getTime()
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+              
+              const formattedDate = nextDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              })
+              
+              if (diffDays === 0) {
+                setNextAppointmentDate(`${formattedDate} (Today)`)
+              } else if (diffDays === 1) {
+                setNextAppointmentDate(`${formattedDate} (Tomorrow)`)
+              } else {
+                setNextAppointmentDate(`${formattedDate} (in ${diffDays} days)`)
+              }
+            }
           }
         }
       } catch (error) {
@@ -158,111 +180,8 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
           </div>
         </div>
 
-        {/* Health Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          {/* Heart Rate Card with ECG-style background */}
-          <Card className="relative overflow-hidden rounded-xl bg-linear-to-br from-red-50 to-white border-red-100 hover:shadow-2xl hover:scale-105 hover:border-red-300 transition-all duration-500 cursor-pointer group">
-            <div className="absolute inset-0 opacity-20 group-hover:opacity-35 transition-opacity duration-500">
-              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 400 200" className="group-hover:animate-pulse">
-                {/* ECG heartbeat pattern - more prominent */}
-                <path d="M0,100 L50,100 L60,80 L70,120 L75,60 L80,140 L85,100 L150,100 L160,80 L170,120 L175,60 L180,140 L185,100 L250,100 L260,80 L270,120 L275,60 L280,140 L285,100 L350,100 L360,80 L370,120 L375,60 L380,140 L385,100 L400,100" 
-                      stroke="#ef4444" 
-                      strokeWidth="3" 
-                      fill="none" 
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="group-hover:animate-pulse">
-                  <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                </path>
-                <path d="M0,120 L50,120 L60,100 L70,140 L75,80 L80,160 L85,120 L150,120 L160,100 L170,140 L175,80 L180,160 L185,120 L250,120 L260,100 L270,140 L275,80 L280,160 L285,120 L350,120 L360,100 L370,140 L375,80 L380,160 L385,120 L400,120" 
-                      stroke="#f87171" 
-                      strokeWidth="2" 
-                      fill="none" 
-                      opacity="0.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"/>
-                {/* Grid lines */}
-                <line x1="0" y1="50" x2="400" y2="50" stroke="#fecaca" strokeWidth="0.5" opacity="0.3"/>
-                <line x1="0" y1="100" x2="400" y2="100" stroke="#fecaca" strokeWidth="0.5" opacity="0.3"/>
-                <line x1="0" y1="150" x2="400" y2="150" stroke="#fecaca" strokeWidth="0.5" opacity="0.3"/>
-              </svg>
-            </div>
-            <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-slate-700 group-hover:text-red-600 transition-colors duration-300">Heart Rate</CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="flex items-center gap-2">
-                <Heart className="w-6 h-6 text-red-500 group-hover:scale-125 group-hover:animate-pulse transition-transform duration-300" />
-                <span className="text-3xl font-bold text-slate-900 group-hover:text-red-600 transition-colors duration-300">72</span>
-                <span className="text-sm text-slate-600">bpm</span>
-              </div>
-              <p className="text-xs text-slate-600 mt-2 font-medium group-hover:text-red-700 transition-colors duration-300">Normal range</p>
-            </CardContent>
-          </Card>
-
-          {/* Blood Pressure Card with line chart background */}
-          <Card className="relative overflow-hidden rounded-xl bg-linear-to-br from-blue-50 to-white border-blue-100 hover:shadow-2xl hover:scale-105 hover:border-blue-300 transition-all duration-500 cursor-pointer group">
-            <div className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity duration-500">
-              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 400 200">
-                {/* Line chart representing blood pressure readings */}
-                <defs>
-                  <linearGradient id="pressureGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#0D4C73" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="#0D4C73" stopOpacity="0.05"/>
-                  </linearGradient>
-                </defs>
-                {/* Systolic line (120) - animated wave */}
-                <path d="M0,80 L40,75 L80,70 L120,75 L160,72 L200,74 L240,71 L280,73 L320,70 L360,72 L400,70" 
-                      stroke="#0D4C73" 
-                      strokeWidth="3" 
-                      fill="none" 
-                      strokeLinecap="round"
-                      className="group-hover:animate-pulse">
-                  <animate attributeName="d" 
-                    values="M0,80 L40,75 L80,70 L120,75 L160,72 L200,74 L240,71 L280,73 L320,70 L360,72 L400,70;
-                            M0,82 L40,77 L80,72 L120,77 L160,74 L200,76 L240,73 L280,75 L320,72 L360,74 L400,72;
-                            M0,80 L40,75 L80,70 L120,75 L160,72 L200,74 L240,71 L280,73 L320,70 L360,72 L400,70"
-                    dur="3s" 
-                    repeatCount="indefinite" 
-                    className="group-hover:block hidden" />
-                </path>
-                {/* Diastolic line (80) - animated wave */}
-                <path d="M0,120 L40,118 L80,115 L120,117 L160,116 L200,118 L240,115 L280,117 L320,114 L360,116 L400,115" 
-                      stroke="#1A6FA1" 
-                      strokeWidth="3" 
-                      fill="none" 
-                      strokeLinecap="round">
-                  <animate attributeName="d" 
-                    values="M0,120 L40,118 L80,115 L120,117 L160,116 L200,118 L240,115 L280,117 L320,114 L360,116 L400,115;
-                            M0,122 L40,120 L80,117 L120,119 L160,118 L200,120 L240,117 L280,119 L320,116 L360,118 L400,117;
-                            M0,120 L40,118 L80,115 L120,117 L160,116 L200,118 L240,115 L280,117 L320,114 L360,116 L400,115"
-                    dur="3s" 
-                    repeatCount="indefinite" 
-                    className="group-hover:block hidden" />
-                </path>
-                {/* Fill area */}
-                <path d="M0,80 L40,75 L80,70 L120,75 L160,72 L200,74 L240,71 L280,73 L320,70 L360,72 L400,70 L400,200 L0,200 Z" 
-                      fill="url(#pressureGradient)"
-                      className="group-hover:animate-pulse"/>
-                {/* Grid */}
-                <line x1="0" y1="60" x2="400" y2="60" stroke="#93c5fd" strokeWidth="0.5" opacity="0.3"/>
-                <line x1="0" y1="100" x2="400" y2="100" stroke="#93c5fd" strokeWidth="0.5" opacity="0.3"/>
-                <line x1="0" y1="140" x2="400" y2="140" stroke="#93c5fd" strokeWidth="0.5" opacity="0.3"/>
-              </svg>
-            </div>
-            <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-slate-700 group-hover:text-helix-primary transition-colors duration-300">Blood Pressure</CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="flex items-center gap-2">
-                <Activity className="w-6 h-6 text-helix-primary group-hover:scale-125 transition-transform duration-300" />
-                <span className="text-3xl font-bold text-slate-900 group-hover:text-helix-primary transition-colors duration-300">120/80</span>
-                <span className="text-sm text-slate-600">mmHg</span>
-              </div>
-              <p className="text-xs text-slate-600 mt-2 font-medium group-hover:text-helix-secondary transition-colors duration-300">Optimal</p>
-            </CardContent>
-          </Card>
-
+        {/* Health Overview - Only Next Checkup (removed mock vitals) */}
+        <div className="grid grid-cols-1 gap-3 md:gap-4">
           {/* Next Checkup Card with calendar bar chart background */}
           <Card className="relative overflow-hidden rounded-xl bg-linear-to-br from-purple-50 to-white border-purple-100 hover:shadow-2xl hover:scale-105 hover:border-purple-300 transition-all duration-500 cursor-pointer group">
             <div className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity duration-500">
@@ -313,9 +232,13 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
             <CardContent className="relative z-10">
               <div className="flex items-center gap-2">
                 <Calendar className="w-6 h-6 text-purple-600 group-hover:scale-125 transition-transform duration-300" />
-                <span className="text-2xl font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-300">Nov 22</span>
+                <span className="text-2xl font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-300">
+                  {loading ? '...' : nextAppointmentDate.split('(')[0].trim()}
+                </span>
               </div>
-              <p className="text-xs text-slate-600 mt-2 font-medium group-hover:text-purple-700 transition-colors duration-300">In 2 days</p>
+              <p className="text-xs text-slate-600 mt-2 font-medium group-hover:text-purple-700 transition-colors duration-300">
+                {loading ? 'Loading...' : nextAppointmentDate.includes('(') ? nextAppointmentDate.match(/\((.*?)\)/)?.[1] || 'Not scheduled' : 'Not scheduled'}
+              </p>
             </CardContent>
           </Card>
         </div>

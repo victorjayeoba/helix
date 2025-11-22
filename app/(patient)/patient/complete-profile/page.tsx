@@ -90,25 +90,47 @@ export default function CompleteProfilePage() {
 
       // Step 3: Create patient in Dorra API
       console.log('📤 Creating patient in Dorra API...')
-      const createResponse = await fetch('/api/patients/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          email: user.email,
-          phone_number: formData.phone || null,
-          date_of_birth: formData.dateOfBirth || null,
-          gender: formData.gender || null,
-          address: formData.address || null,
-          allergies: allergiesArray
+      console.log('User data:', { firstName, lastName, email: user.email })
+      
+      let createResponse
+      try {
+        createResponse = await fetch('/api/patients/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            email: user.email,
+            phone_number: formData.phone || null,
+            date_of_birth: formData.dateOfBirth || null,
+            gender: formData.gender || null,
+            address: formData.address || null,
+            allergies: allergiesArray
+          })
         })
-      })
+      } catch (fetchError: any) {
+        console.error('❌ Network error:', fetchError)
+        throw new Error('Network error. Please check your connection and try again.')
+      }
 
-      const createData = await createResponse.json()
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text()
+        console.error('❌ HTTP Error:', createResponse.status, errorText)
+        throw new Error(`Server error (${createResponse.status}): ${errorText}`)
+      }
+
+      let createData
+      try {
+        createData = await createResponse.json()
+      } catch (parseError) {
+        console.error('❌ Failed to parse response')
+        throw new Error('Invalid response from server')
+      }
+
+      console.log('📋 API Response:', createData)
 
       if (!createData.status || !createData.id) {
-        throw new Error(createData.message || 'Failed to create patient profile')
+        throw new Error(createData.message || 'Failed to create patient profile in EMR system')
       }
 
       const dorraPatientId = createData.id
@@ -117,28 +139,54 @@ export default function CompleteProfilePage() {
       // Step 4: Store mapping in Firestore
       await storeDorraPatientMapping(user.uid, dorraPatientId)
 
-      // Step 5: Store additional profile data in Firestore
+      // Step 5: Store complete profile data in Firestore (form data + API response)
       const db = getFirestore()
-      await setDoc(doc(db, 'patientProfiles', user.uid), {
+      const profileData = {
+        // Dorra API Response
         dorraPatientId,
+        apiResponse: {
+          status: createData.status,
+          message: createData.message,
+          createdAt: new Date().toISOString()
+        },
+        
+        // User Information
+        firstName,
+        lastName,
+        email: user.email,
+        
+        // Basic Information (Step 1)
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         address: formData.address,
+        
+        // Health Vitals (Step 2)
         height: formData.height,
         weight: formData.weight,
         bloodType: formData.bloodType,
+        
+        // Medical History (Step 3)
         allergies: allergiesArray,
         chronicConditions: formData.chronicConditions,
         currentMedications: formData.currentMedications,
+        
+        // Emergency Contact (Step 4)
         emergencyContact: {
           name: formData.emergencyName,
           relationship: formData.emergencyRelationship,
           phone: formData.emergencyPhone
         },
+        
+        // Metadata
         completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
+        updatedAt: new Date().toISOString(),
+        profileVersion: '1.0'
+      }
+
+      console.log('💾 Saving to Firestore:', profileData)
+      await setDoc(doc(db, 'patientProfiles', user.uid), profileData)
+      console.log('✅ Saved to Firestore successfully')
 
       // Step 6: Mark profile as complete
       localStorage.setItem(`profile-complete-${user.uid}`, 'completed')

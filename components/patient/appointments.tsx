@@ -30,6 +30,7 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
   const { user } = useAuth()
   const [selectedTab, setSelectedTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [appointments, setAppointments] = useState<AppointmentGroup>({
     upcoming: [],
@@ -38,7 +39,9 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
   })
   const [loading, setLoading] = useState(true)
   const [isBooking, setIsBooking] = useState(false)
+  const [isRescheduling, setIsRescheduling] = useState(false)
   const [dorraPatientId, setDorraPatientId] = useState<number | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -50,6 +53,12 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
     reasonType: '',
     description: '',
     questions: ''
+  })
+
+  // Reschedule form state
+  const [rescheduleForm, setRescheduleForm] = useState({
+    date: '',
+    time: ''
   })
 
   // Fetch Dorra patient ID on mount
@@ -154,8 +163,25 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
           description: '',
           questions: ''
         })
+        
         // Refresh appointments
-        window.location.reload()
+        fetchAppointments()
+
+        // Create notification
+        if (user) {
+          try {
+            const { createNotification } = await import('@/lib/firebase/notifications')
+            await createNotification({
+              userId: user.uid,
+              type: 'appointment',
+              title: 'Appointment Booked',
+              message: `Your ${bookingForm.specialty} appointment has been scheduled for ${bookingForm.date} at ${bookingForm.time}`,
+              read: false
+            })
+          } catch (notifError) {
+            console.error('Failed to create notification:', notifError)
+          }
+        }
       } else {
         throw new Error(data.message || 'Failed to book appointment')
       }
@@ -164,6 +190,109 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
       toast.error(error.message || 'Failed to book appointment')
     } finally {
       setIsBooking(false)
+    }
+  }
+
+  const handleReschedule = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    const appointmentDate = new Date(appointment.date)
+    setRescheduleForm({
+      date: appointmentDate.toISOString().split('T')[0],
+      time: appointmentDate.toTimeString().slice(0, 5)
+    })
+    setRescheduleDialogOpen(true)
+  }
+
+  const handleRescheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selectedAppointment) return
+
+    if (!rescheduleForm.date || !rescheduleForm.time) {
+      toast.error('Please select both date and time')
+      return
+    }
+
+    setIsRescheduling(true)
+
+    try {
+      const response = await fetch(`/api/appointments/${selectedAppointment.id}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rescheduleForm)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Appointment rescheduled successfully!')
+        setRescheduleDialogOpen(false)
+        setSelectedAppointment(null)
+        fetchAppointments()
+
+        // Create notification
+        if (user) {
+          try {
+            const { createNotification } = await import('@/lib/firebase/notifications')
+            await createNotification({
+              userId: user.uid,
+              type: 'appointment',
+              title: 'Appointment Rescheduled',
+              message: `Your appointment has been rescheduled to ${rescheduleForm.date} at ${rescheduleForm.time}`,
+              read: false
+            })
+          } catch (notifError) {
+            console.error('Failed to create notification:', notifError)
+          }
+        }
+      } else {
+        toast.error(data.message || 'Failed to reschedule appointment')
+      }
+    } catch (error) {
+      console.error('Reschedule error:', error)
+      toast.error('An error occurred while rescheduling')
+    } finally {
+      setIsRescheduling(false)
+    }
+  }
+
+  const handleCancel = async (appointment: Appointment) => {
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/appointments/${appointment.id}/cancel`, {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Appointment cancelled successfully')
+        fetchAppointments()
+
+        // Create notification
+        if (user) {
+          try {
+            const { createNotification } = await import('@/lib/firebase/notifications')
+            await createNotification({
+              userId: user.uid,
+              type: 'alert',
+              title: 'Appointment Cancelled',
+              message: `Your appointment has been cancelled`,
+              read: false
+            })
+          } catch (notifError) {
+            console.error('Failed to create notification:', notifError)
+          }
+        }
+      } else {
+        toast.error(data.message || 'Failed to cancel appointment')
+      }
+    } catch (error) {
+      console.error('Cancel error:', error)
+      toast.error('An error occurred while cancelling')
     }
   }
 
@@ -496,10 +625,19 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
 
                         {selectedTab === 'upcoming' && (
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleReschedule(appointment)}
+                            >
                               Reschedule
                             </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleCancel(appointment)}
+                            >
                               Cancel
                             </Button>
                           </div>
@@ -550,10 +688,20 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
 
                       {selectedTab === 'upcoming' && (
                         <div className="flex gap-2 pt-2">
-                          <Button variant="outline" size="sm" className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleReschedule(appointment)}
+                          >
                             Reschedule
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 text-red-600 hover:text-red-700"
+                            onClick={() => handleCancel(appointment)}
+                          >
                             Cancel
                           </Button>
                         </div>
@@ -568,6 +716,69 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
           </>
         )}
       </div>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reschedule Appointment</DialogTitle>
+            <DialogDescription>
+              Select a new date and time for your appointment
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRescheduleSubmit} className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="reschedule-date">Date *</Label>
+                <Input 
+                  id="reschedule-date" 
+                  type="date"
+                  value={rescheduleForm.date}
+                  onChange={(e) => setRescheduleForm({...rescheduleForm, date: e.target.value})}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reschedule-time">Time *</Label>
+                <Input 
+                  id="reschedule-time" 
+                  type="time"
+                  value={rescheduleForm.time}
+                  onChange={(e) => setRescheduleForm({...rescheduleForm, time: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setRescheduleDialogOpen(false)}
+                disabled={isRescheduling}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1 bg-helix-primary" 
+                disabled={isRescheduling}
+              >
+                {isRescheduling ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Rescheduling...
+                  </>
+                ) : (
+                  'Confirm'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

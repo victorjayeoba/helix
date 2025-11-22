@@ -1,6 +1,8 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   User,
   updateProfile
@@ -67,6 +69,47 @@ export const signIn = async (email: string, password: string): Promise<User> => 
     return userCredential.user
   } catch (error: any) {
     throw new Error(error.message || 'Failed to sign in')
+  }
+}
+
+export const signInWithGoogle = async (userType: UserType = 'patient'): Promise<User> => {
+  try {
+    if (!auth) {
+      throw new Error('Firebase auth not initialized')
+    }
+    if (!db) {
+      throw new Error('Firestore not initialized')
+    }
+
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    })
+
+    const userCredential = await signInWithPopup(auth, provider)
+    const user = userCredential.user
+
+    // Check if user already exists in Firestore
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
+    
+    if (!userDoc.exists()) {
+      // First time sign in - create user document
+      const userData: UserData = {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        userType,
+        createdAt: new Date()
+      }
+      await setDoc(doc(db, 'users', user.uid), userData)
+    }
+
+    return user
+  } catch (error: any) {
+    if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('Sign-in cancelled')
+    }
+    throw new Error(error.message || 'Failed to sign in with Google')
   }
 }
 

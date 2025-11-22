@@ -33,65 +33,6 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
   const [loading, setLoading] = useState(true)
   const [fcmEnabled, setFcmEnabled] = useState(false)
 
-  // Mock notifications data as fallback
-  const mockNotifications: Notification[] = [
-    {
-      id: 1,
-      type: 'appointment',
-      icon: Calendar,
-      title: 'Appointment Reminder',
-      message: 'Your appointment with Dr. Sarah Johnson is tomorrow at 10:00 AM',
-      time: '2 hours ago',
-      read: false,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50'
-    },
-    {
-      id: 2,
-      type: 'message',
-      icon: MessageSquare,
-      title: 'New Message',
-      message: 'Dr. Chen responded to your query about medication',
-      time: '5 hours ago',
-      read: false,
-      color: 'text-green-600',
-      bg: 'bg-green-50'
-    },
-    {
-      id: 3,
-      type: 'alert',
-      icon: AlertCircle,
-      title: 'Test Results Available',
-      message: 'Your blood test results are now available to view',
-      time: '1 day ago',
-      read: false,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50'
-    },
-    {
-      id: 4,
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Appointment Confirmed',
-      message: 'Your appointment for Nov 25 has been confirmed',
-      time: '2 days ago',
-      read: true,
-      color: 'text-green-600',
-      bg: 'bg-green-50'
-    },
-    {
-      id: 5,
-      type: 'reminder',
-      icon: Clock,
-      title: 'Medication Reminder',
-      message: 'Time to take your evening medication',
-      time: '3 days ago',
-      read: true,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50'
-    }
-  ]
-
   // Request FCM permission on mount
   useEffect(() => {
     const setupFCM = async () => {
@@ -112,7 +53,7 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
   useEffect(() => {
     if (!user) {
       setLoading(false)
-      setNotifications(mockNotifications)
+      setNotifications([])
       return
     }
 
@@ -143,16 +84,12 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
           }
         })
 
-        if (notifs.length === 0) {
-          setNotifications(mockNotifications)
-        } else {
-          setNotifications(notifs)
-        }
+        setNotifications(notifs)
         setLoading(false)
       },
       (error) => {
         console.error('Error fetching notifications:', error)
-        setNotifications(mockNotifications)
+        setNotifications([])
         setLoading(false)
       }
     )

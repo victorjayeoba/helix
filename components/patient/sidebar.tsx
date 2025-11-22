@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { useState, useEffect } from 'react'
+import { useNotifications } from '@/hooks/use-notifications'
+import { useAppointments } from '@/hooks/use-appointments'
 
 interface PatientSidebarProps {
   activeView: string
@@ -22,6 +24,8 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
   const { userData, user } = useAuth()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(false)
+  const { unreadCount: notificationCount } = useNotifications()
+  const { upcomingCount: appointmentCount } = useAppointments()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -44,7 +48,7 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
 
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'appointments', label: 'Appointments', icon: Calendar, badge: 2 },
+    { id: 'appointments', label: 'Appointments', icon: Calendar, badge: appointmentCount },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'find-healthcare', label: 'Find Healthcare', icon: MapPin },
     { id: 'profile', label: 'My Profile', icon: User },
@@ -156,7 +160,9 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
               >
                 <Bell className="w-5 h-5" />
                 <span className="font-medium">Notifications</span>
-                <Badge className="ml-auto bg-red-500 text-white">3</Badge>
+                {notificationCount > 0 && (
+                  <Badge className="ml-auto bg-red-500 text-white">{notificationCount}</Badge>
+                )}
               </button>
               <button
                 onClick={handleSignOut}
@@ -218,9 +224,11 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
             className="w-full p-3 flex items-center justify-center hover:bg-slate-100 rounded-lg transition relative"
           >
             <Bell className="w-5 h-5 text-slate-600" />
-            <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500">
-              3
-            </Badge>
+            {notificationCount > 0 && (
+              <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500">
+                {notificationCount}
+              </Badge>
+            )}
           </button>
           <button
             onClick={handleSignOut}
@@ -318,7 +326,9 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
         >
           <Bell className="w-5 h-5" />
           <span className="font-medium">Notifications</span>
-          <Badge className="ml-auto bg-red-500 text-white">3</Badge>
+          {notificationCount > 0 && (
+            <Badge className="ml-auto bg-red-500 text-white">{notificationCount}</Badge>
+          )}
         </button>
         <button
           onClick={handleSignOut}

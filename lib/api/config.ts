@@ -1,28 +1,11 @@
-/**
- * API Configuration
- * Centralized configuration for API calls
- */
+// Dorra EMR API Configuration
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://hackathon-api.aheadafrica.org/v1'
+export const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
 
-export const getApiKey = (): string => {
-  const key = process.env.EMR_API_KEY
-  if (!key) {
-    // Fallback to hardcoded value for backward compatibility (remove in production)
-    console.warn('⚠️ EMR_API_KEY environment variable is not set, using fallback')
-    return '1OCMWBALSS:ZxfDMeshZyERUySeqUlxW82P45aVg6uJnYPaQstuzBM'
-  }
-  return key
+if (!API_KEY) {
+  console.warn('⚠️ NEXT_PUBLIC_API_KEY is not set. API calls will fail.')
 }
 
-export const getApiBaseUrl = (): string => {
-  const url = process.env.EMR_API_BASE_URL
-  if (!url) {
-    // Default to the hackathon API if not set
-    return 'https://hackathon-api.aheadafrica.org/v1'
-  }
-  return url
+if (!API_BASE) {
+  console.warn('⚠️ NEXT_PUBLIC_API_BASE is not set. Using default URL.')
 }
-
-// For server-side use (API routes)
-export const API_KEY = getApiKey()
-export const API_BASE = getApiBaseUrl()
-

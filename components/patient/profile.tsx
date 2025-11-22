@@ -103,7 +103,9 @@ export default function PatientProfile({ onMobileMenuToggle }: PatientProfilePro
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-semibold">{userData?.displayName || 'Patient'}</h1>
-            <p className="text-sm text-white/80 mt-1">Patient ID: {user?.uid.slice(0, 8)}</p>
+            <p className="text-sm text-white/80 mt-1">
+              Patient ID: {dorraPatientId ? `#${dorraPatientId}` : 'Not assigned'}
+            </p>
           </div>
           <Button
             variant="outline"

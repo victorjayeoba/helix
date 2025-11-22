@@ -138,6 +138,8 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
 
       try {
         setLoading(true)
+        console.log('📤 Sending message to AI:', currentMessage)
+        
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -147,7 +149,14 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
           })
         })
 
+        console.log('📊 Response status:', response.status)
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
         const data = await response.json()
+        console.log('✅ AI Response data:', data)
 
         const aiResponse: Message = {
           id: `${Date.now() + 1}`,
@@ -158,7 +167,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
 
         setMessages(prev => [...prev, aiResponse])
       } catch (error) {
-        console.error('Chat error:', error)
+        console.error('❌ Chat error:', error)
         const errorMessage: Message = {
           id: `${Date.now() + 1}`,
           sender: 'ai',
