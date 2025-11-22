@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, MessageSquare, MapPin, Activity, Heart, AlertCircle, Menu, Search, Loader2 } from 'lucide-react'
+import { Calendar, MessageSquare, MapPin, Activity, Heart, AlertCircle, Menu, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { getDorraPatientId } from '@/lib/api/patient-mapping'
 import { Appointment } from '@/lib/api/appointments'
@@ -130,15 +129,6 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
       </div>
 
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search dashboard, appointments, health records..."
-            className="pl-10 bg-white"
-          />
-        </div>
-
         {/* Welcome Section */}
         <div className="bg-linear-to-r from-helix-primary to-helix-secondary rounded-xl p-4 md:p-6 text-white">
           <h1 className="text-xl md:text-2xl font-bold mb-2">

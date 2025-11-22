@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, User, MapPin, Plus, Search, Filter, Menu, Grid3x3, List, Loader2 } from 'lucide-react'
+import { Calendar, Clock, User, MapPin, Plus, Filter, Menu, Grid3x3, List, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
@@ -364,15 +363,6 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
       </div>
 
       <div className="p-4 md:p-6">
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search appointments by doctor, date, or specialty..."
-            className="pl-10 bg-white"
-          />
-        </div>
-
         {/* Header */}
         <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

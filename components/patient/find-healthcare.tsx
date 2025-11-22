@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Navigation, Phone, Clock, Star, Search, Menu, Loader2, AlertCircle } from 'lucide-react'
+import { MapPin, Navigation, Phone, Clock, Star, Menu, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
@@ -31,7 +30,6 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
   const [loading, setLoading] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Get user's current location
   const getUserLocation = () => {
@@ -66,8 +64,7 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
         setLocationError(errorMessage)
         toast.error(errorMessage)
         setLoading(false)
-        // Load default mock data
-        loadMockData()
+        // Don't load mock data - user needs to grant location access
       }
     )
   }
@@ -127,13 +124,18 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
             ? calculateDistance(lat, lon, elementLat, elementLon)
             : 0
 
+          // Format distance: show meters if < 1 km, otherwise show km
+          const formattedDistance = distance < 1 
+            ? `${Math.round(distance * 1000)} m`
+            : `${distance.toFixed(1)} km`
+
           return {
             id: `${element.id || index}`,
             name: element.tags.name || `${type === 'hospital' ? 'Hospital' : 'Pharmacy'} ${index + 1}`,
             address: element.tags['addr:full'] || 
                      `${element.tags['addr:street'] || ''} ${element.tags['addr:housenumber'] || ''}`.trim() ||
                      'Address not available',
-            distance: `${distance.toFixed(1)} km`,
+            distance: formattedDistance,
             rating: element.tags.rating ? parseFloat(element.tags.rating) : undefined,
             phone: element.tags.phone || element.tags['contact:phone'],
             hours: element.tags.opening_hours || (type === 'hospital' ? '24/7 Emergency' : '8:00 AM - 8:00 PM'),
@@ -152,70 +154,19 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
         .slice(0, 10) // Get top 10 closest
 
       if (formattedLocations.length === 0) {
-        toast.info('No locations found nearby. Showing sample data.')
-        loadMockData()
+        toast.info('No locations found nearby. Please try a different location or expand your search radius.')
+        setLocations([])
       } else {
         setLocations(formattedLocations)
         toast.success(`Found ${formattedLocations.length} ${type === 'hospital' ? 'hospitals' : 'pharmacies'} nearby`)
       }
     } catch (error) {
       console.error('Error fetching locations:', error)
-      toast.error('Failed to fetch locations. Showing sample data.')
-      loadMockData()
+      toast.error('Failed to fetch locations. Please try again.')
+      setLocations([])
     } finally {
       setLoading(false)
     }
-  }
-
-  // Load mock data as fallback
-  const loadMockData = () => {
-    const mockHospitals: Location[] = [
-      {
-        id: '1',
-        name: 'City General Hospital',
-        address: '123 Main Street, Downtown',
-        distance: '2.3 km',
-        rating: 4.5,
-        phone: '+234 123 456 7890',
-        hours: '24/7 Emergency',
-        services: ['Emergency', 'Surgery', 'ICU', 'Outpatient']
-      },
-      {
-        id: '2',
-        name: 'St. Mary\'s Medical Center',
-        address: '456 Oak Avenue, Midtown',
-        distance: '3.8 km',
-        rating: 4.7,
-        phone: '+234 098 765 4321',
-        hours: 'Open 24 hours',
-        services: ['Emergency', 'Maternity', 'Pediatrics', 'Lab']
-      }
-    ]
-
-    const mockPharmacies: Location[] = [
-      {
-        id: '1',
-        name: 'HealthPlus Pharmacy',
-        address: '321 High Street, City Center',
-        distance: '1.5 km',
-        rating: 4.6,
-        phone: '+234 444 555 6666',
-        hours: '8:00 AM - 10:00 PM',
-        services: ['Prescription', 'OTC', 'Home Delivery']
-      },
-      {
-        id: '2',
-        name: 'CareRite Drugstore',
-        address: '654 Park Lane, East Side',
-        distance: '2.9 km',
-        rating: 4.4,
-        phone: '+234 777 888 9999',
-        hours: '24/7',
-        services: ['Prescription', 'Medical Supplies', 'Consultation']
-      }
-    ]
-
-    setLocations(searchType === 'hospital' ? mockHospitals : mockPharmacies)
   }
 
   // Handle search type change
@@ -224,7 +175,8 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
     if (userLocation) {
       fetchNearbyLocations(userLocation.lat, userLocation.lon, type)
     } else {
-      loadMockData()
+      // Don't load mock data - user needs to grant location access first
+      setLocations([])
     }
   }
 
@@ -237,10 +189,7 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
     }
   }
 
-  // Load mock data on mount
-  useEffect(() => {
-    loadMockData()
-  }, [searchType])
+  // Don't load any data on mount - wait for user to grant location access
 
   return (
     <div className="flex-1 bg-white h-full overflow-y-auto">
@@ -259,17 +208,6 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
       </div>
 
       <div className="p-4 md:p-6 bg-slate-50">
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search hospitals, pharmacies by name or location..."
-            className="pl-10 bg-white"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
         {/* Location Error Alert */}
         {locationError && (
           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
@@ -325,22 +263,31 @@ export default function FindHealthcare({ onMobileMenuToggle }: FindHealthcarePro
         {/* Results */}
         <div>
           <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            {loading ? 'Searching...' : `${locations.length} ${searchType === 'hospital' ? 'Hospitals' : 'Pharmacies'} Near You`}
+            {loading ? 'Searching...' : userLocation 
+              ? `${locations.length} ${searchType === 'hospital' ? 'Hospitals' : 'Pharmacies'} Near You`
+              : 'Click "Use My Current Location" to find nearby facilities'
+            }
           </h2>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-helix-primary" />
             </div>
+          ) : locations.length === 0 && !userLocation ? (
+            <div className="text-center py-12">
+              <MapPin className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+              <p className="text-slate-600 mb-2">No locations to display</p>
+              <p className="text-sm text-slate-500">Please click "Use My Current Location" to find nearby {searchType === 'hospital' ? 'hospitals' : 'pharmacies'}</p>
+            </div>
+          ) : locations.length === 0 && userLocation ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+              <p className="text-slate-600 mb-2">No {searchType === 'hospital' ? 'hospitals' : 'pharmacies'} found nearby</p>
+              <p className="text-sm text-slate-500">Try expanding your search radius or check a different location</p>
+            </div>
           ) : (
           <div className="space-y-4">
-            {locations
-              .filter(location => 
-                searchQuery === '' || 
-                location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                location.address.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((location) => (
+            {locations.map((location) => (
               <Card key={location.id} className="rounded-xl hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">

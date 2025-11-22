@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Mail, Phone, Calendar, MapPin, Activity, AlertCircle, Edit, Menu, Search, Loader2 } from 'lucide-react'
+import { User, Mail, Phone, Calendar, MapPin, Activity, AlertCircle, Edit, Menu, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { getFirestore, getDoc, doc } from 'firebase/firestore'
@@ -86,15 +85,6 @@ export default function PatientProfile({ onMobileMenuToggle }: PatientProfilePro
       </div>
 
       <div className="p-4 md:p-6 bg-slate-50">
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search profile information, medical records..."
-            className="pl-10 bg-white"
-          />
-        </div>
-
         {/* Header */}
         <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
         <div className="flex items-center gap-4">

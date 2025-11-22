@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, Calendar, MessageSquare, AlertCircle, CheckCircle, Clock, Menu, Search, Loader2 } from 'lucide-react'
+import { Bell, Calendar, MessageSquare, AlertCircle, CheckCircle, Clock, Menu, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore'
 import { requestNotificationPermission, onMessageListener, storeFCMToken } from '@/lib/firebase/messaging'
@@ -225,15 +224,6 @@ export default function PatientNotifications({ onMobileMenuToggle }: PatientNoti
       </div>
 
       <div className="p-4 md:p-6 bg-slate-50">
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search notifications by type, date, or message..."
-            className="pl-10 bg-white"
-          />
-        </div>
-
         {/* Header */}
         <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

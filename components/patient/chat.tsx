@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, User, Stethoscope, Menu, Search } from 'lucide-react'
+import { Send, User, Stethoscope, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   createOrGetConversation, 
@@ -142,15 +141,6 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
       </div>
 
       <div className="p-4 md:p-6 bg-slate-50">
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search chat history or medical topics..."
-            className="pl-10 bg-white"
-          />
-        </div>
-
         {/* Header */}
         <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
           <div className="flex items-center gap-3 mb-2">
