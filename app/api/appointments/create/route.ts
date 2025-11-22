@@ -6,13 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { 
       patientId, 
-      specialty, 
-      date, 
-      time, 
-      reason, 
-      type, 
-      description,
-      doctorName 
+      prompt
     } = body
     
     if (!patientId) {
@@ -25,10 +19,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create AI prompt for appointment booking
-    const appointmentType = type === 'virtual' ? 'virtual' : 'in-person'
-    const prompt = `Schedule a ${appointmentType} appointment${doctorName ? ` with Dr. ${doctorName}` : ''} for ${specialty} on ${date} at ${time}. Reason: ${reason || 'General consultation'}. ${description ? `Additional details: ${description}` : ''}`
-    
+    if (!prompt || !prompt.trim()) {
+      return NextResponse.json(
+        { 
+          success: false,
+          message: 'Appointment prompt is required' 
+        },
+        { status: 400 }
+      )
+    }
+
     console.log('📤 Creating appointment via AI:', { patientId, prompt })
     
     const response = await fetch(`${API_BASE}/ai/emr`, {
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        prompt,
+        prompt: prompt.trim(),
         patient: patientId
       })
     })

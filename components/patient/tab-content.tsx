@@ -3,6 +3,7 @@
 import { usePatientTabs } from '@/contexts/PatientTabContext'
 import PatientHome from './home'
 import PatientAppointments from './appointments'
+import PatientTests from './tests'
 import PatientChat from './chat'
 import FindHealthcare from './find-healthcare'
 import PatientProfile from './profile'
@@ -24,6 +25,8 @@ export default function PatientTabContent() {
       return <PatientHome />
     case 'Appointments':
       return <PatientAppointments />
+    case 'Tests':
+      return <PatientTests />
     case 'Chat':
       return <PatientChat />
     case 'Find Healthcare':

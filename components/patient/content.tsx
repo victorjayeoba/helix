@@ -2,6 +2,7 @@
 
 import PatientHome from './home'
 import PatientAppointments from './appointments'
+import PatientTests from './tests'
 import PatientChat from './chat'
 import FindHealthcare from './find-healthcare'
 import PatientProfile from './profile'
@@ -20,6 +21,8 @@ export default function PatientContent({ activeView, onNavigate, onMobileMenuTog
         return <PatientHome onNavigate={onNavigate} onMobileMenuToggle={onMobileMenuToggle} />
       case 'appointments':
         return <PatientAppointments onMobileMenuToggle={onMobileMenuToggle} />
+      case 'tests':
+        return <PatientTests onMobileMenuToggle={onMobileMenuToggle} />
       case 'chat':
         return <PatientChat onMobileMenuToggle={onMobileMenuToggle} />
       case 'find-healthcare':
@@ -34,7 +37,7 @@ export default function PatientContent({ activeView, onNavigate, onMobileMenuTog
   }
 
   return (
-    <div className="flex-1 overflow-hidden w-full">
+    <div className="flex-1 overflow-hidden w-full min-h-0">
       {renderContent()}
     </div>
   )

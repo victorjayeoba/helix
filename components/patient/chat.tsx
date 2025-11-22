@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send, Bot, User, Stethoscope, Menu, Search } from 'lucide-react'
+import { Send, User, Stethoscope, Menu, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
-import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   createOrGetConversation, 
@@ -15,11 +14,9 @@ import {
 } from '@/lib/firebase/chat'
 import { toast } from 'sonner'
 
-type ChatMode = 'doctor' | 'ai'
-
 interface Message {
   id: string
-  sender: 'user' | 'doctor' | 'ai'
+  sender: 'user' | 'doctor'
   text: string
   timestamp: string
 }
@@ -30,16 +27,8 @@ interface PatientChatProps {
 
 export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {}) {
   const { user, userData } = useAuth()
-  const [chatMode, setChatMode] = useState<ChatMode>('ai')
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'ai',
-      text: 'Hello! I\'m your AI Health Assistant. How can I help you today?',
-      timestamp: '10:30 AM'
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -55,10 +44,10 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
 
   // Initialize doctor chat conversation
   useEffect(() => {
-    if (chatMode === 'doctor' && user && userData) {
+    if (user && userData) {
       initializeDoctorChat()
     }
-  }, [chatMode, user, userData])
+  }, [user, userData])
 
   const initializeDoctorChat = async () => {
     if (!user || !userData) return
@@ -89,7 +78,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
           setMessages([{
             id: 'welcome',
             sender: 'doctor',
-            text: 'Hello! A doctor will be with you shortly. Please describe your concern.',
+            text: 'Hello! An available doctor will respond to your message shortly. Please describe your concern or question.',
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           }])
         } else {
@@ -106,102 +95,33 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
     }
   }
 
-  // Update greeting message when mode changes
-  const handleModeChange = (mode: ChatMode) => {
-    setChatMode(mode)
-    if (mode === 'ai') {
-      setMessages([{
-        id: '1',
-        sender: 'ai',
-        text: 'Hello! I\'m your AI Health Assistant. How can I help you today?',
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      }])
-      setConversationId(null)
-    }
-  }
-
   const handleSendMessage = async () => {
     if (!message.trim() || loading) return
+
+    if (!user || !userData || !conversationId) {
+      toast.error('Please sign in to chat with a doctor')
+      return
+    }
 
     const currentMessage = message
     setMessage('')
 
-    // For AI mode, get response from API
-    if (chatMode === 'ai') {
-      const userMessage: Message = {
-        id: `${Date.now()}`,
-        sender: 'user',
-        text: currentMessage,
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      }
-      setMessages(prev => [...prev, userMessage])
-
-      try {
-        setLoading(true)
-        console.log('📤 Sending message to AI:', currentMessage)
-        
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: currentMessage,
-            conversationHistory: messages.slice(-10) // Last 10 messages for context
-          })
-        })
-
-        console.log('📊 Response status:', response.status)
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        console.log('✅ AI Response data:', data)
-
-        const aiResponse: Message = {
-          id: `${Date.now() + 1}`,
-          sender: 'ai',
-          text: data.message || 'I apologize, but I could not generate a response. Please try again.',
-          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        }
-
-        setMessages(prev => [...prev, aiResponse])
-      } catch (error) {
-        console.error('❌ Chat error:', error)
-        const errorMessage: Message = {
-          id: `${Date.now() + 1}`,
-          sender: 'ai',
-          text: 'I apologize, but I encountered an error. Please try again.',
-          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        }
-        setMessages(prev => [...prev, errorMessage])
-      } finally {
-        setLoading(false)
-      }
-    } else {
-      // For doctor mode, send real message via Firebase
-      if (!user || !userData || !conversationId) {
-        toast.error('Please sign in to chat with a doctor')
-        return
-      }
-
-      try {
-        setLoading(true)
-        await sendMessage(
-          conversationId,
-          user.uid,
-          'patient',
-          userData.displayName || user.email || 'Patient',
-          currentMessage
-        )
-        // Message will appear via real-time listener
-      } catch (error) {
-        console.error('Error sending message:', error)
-        toast.error('Failed to send message')
-        setMessage(currentMessage) // Restore message on error
-      } finally {
-        setLoading(false)
-      }
+    try {
+      setLoading(true)
+      await sendMessage(
+        conversationId,
+        user.uid,
+        'patient',
+        userData.displayName || user.email || 'Patient',
+        currentMessage
+      )
+      // Message will appear via real-time listener
+    } catch (error) {
+      console.error('Error sending message:', error)
+      toast.error('Failed to send message')
+      setMessage(currentMessage) // Restore message on error
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -233,44 +153,13 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
 
         {/* Header */}
         <div className="bg-helix-primary text-white p-4 md:p-6 rounded-xl">
-        <h1 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">Medical Consultation</h1>
-        
-        {/* Mode Selection */}
-        <div className="grid grid-cols-2 gap-2 md:gap-4 w-full">
-          <button
-            onClick={() => handleModeChange('doctor')}
-            className={`flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all border-2 ${
-              chatMode === 'doctor'
-                ? 'bg-white text-helix-primary border-white shadow-lg'
-                : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-            }`}
-          >
-            <Stethoscope className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
-            <div className="text-center sm:text-left">
-              <div className="font-semibold text-sm md:text-base">Chat with Doctor</div>
-              <div className={`text-xs ${chatMode === 'doctor' ? 'text-helix-primary/70' : 'text-white/70'} hidden sm:block`}>
-                Connect with a medical professional
-              </div>
+          <div className="flex items-center gap-3 mb-2">
+            <Stethoscope className="w-6 h-6 md:w-8 md:h-8 shrink-0" />
+            <div>
+              <h1 className="text-xl md:text-2xl font-semibold">Chat with a Doctor</h1>
+              <p className="text-sm text-white/80 mt-1">Any available doctor will respond</p>
             </div>
-          </button>
-
-          <button
-            onClick={() => handleModeChange('ai')}
-            className={`flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all border-2 ${
-              chatMode === 'ai'
-                ? 'bg-white text-helix-primary border-white shadow-lg'
-                : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-            }`}
-          >
-            <Bot className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
-            <div className="text-center sm:text-left">
-              <div className="font-semibold text-sm md:text-base">AI Doctor</div>
-              <div className={`text-xs ${chatMode === 'ai' ? 'text-helix-primary/70' : 'text-white/70'} hidden sm:block`}>
-                Get instant AI-powered advice
-              </div>
-            </div>
-          </button>
-        </div>
+          </div>
         </div>
       </div>
 
@@ -285,14 +174,10 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
               msg.sender === 'user' 
                 ? 'bg-helix-primary' 
-                : msg.sender === 'ai'
-                ? 'bg-purple-500'
                 : 'bg-green-500'
             }`}>
               {msg.sender === 'user' ? (
                 <User className="w-5 h-5 text-white" />
-              ) : msg.sender === 'ai' ? (
-                <Bot className="w-5 h-5 text-white" />
               ) : (
                 <Stethoscope className="w-5 h-5 text-white" />
               )}
@@ -303,8 +188,6 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
               <div className={`rounded-2xl px-4 py-3 ${
                 msg.sender === 'user'
                   ? 'bg-helix-primary text-white rounded-tr-none'
-                  : msg.sender === 'ai'
-                  ? 'bg-white border border-slate-200 text-slate-900 rounded-tl-none'
                   : 'bg-white border border-helix-secondary text-slate-900 rounded-tl-none'
               }`}>
                 <p className="text-sm leading-relaxed">{msg.text}</p>
@@ -322,7 +205,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder={chatMode === 'doctor' ? 'Type your message to the doctor...' : 'Ask AI Doctor anything...'}
+            placeholder="Type your message to a doctor..."
             className="resize-none"
             rows={2}
             onKeyDown={(e) => {
@@ -341,10 +224,7 @@ export default function PatientChat({ onMobileMenuToggle }: PatientChatProps = {
           </Button>
         </div>
         <p className="text-xs text-slate-500 text-center mt-2">
-          {chatMode === 'ai' 
-            ? 'AI responses are for informational purposes only. Consult a doctor for medical advice.'
-            : 'Connected to on-call doctor. Response time may vary.'
-          }
+          An available doctor will respond to your message. Response time may vary.
         </p>
       </div>
     </div>

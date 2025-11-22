@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Appointment, fetchAppointments, updateAppointment as updateAppointmentAPI, UpdateAppointmentData } from '@/lib/api/appointments'
+import { Appointment, fetchAppointments, updateAppointment as updateAppointmentAPI, deleteAppointment as deleteAppointmentAPI, UpdateAppointmentData } from '@/lib/api/appointments'
 
 interface AppointmentsState {
   appointments: Appointment[]
@@ -14,6 +14,7 @@ interface AppointmentsState {
   fetchAppointments: (apiEndpoint?: string, forceRefresh?: boolean) => Promise<void>
   fetchPatientAppointments: (patientId: number, forceRefresh?: boolean) => Promise<void>
   updateAppointment: (appointmentId: number, data: UpdateAppointmentData) => Promise<void>
+  deleteAppointment: (appointmentId: number) => Promise<void>
   setSelectedPatient: (patientId: number | null) => void
   clearCache: () => void
   setCacheDuration: (duration: number) => void
@@ -111,6 +112,19 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
       console.log(`✅ Updated appointment ${appointmentId}`)
     } catch (error: any) {
       console.error('❌ Error updating appointment:', error)
+      throw error
+    }
+  },
+
+  deleteAppointment: async (appointmentId: number) => {
+    try {
+      await deleteAppointmentAPI(appointmentId)
+      const state = get()
+      const filteredAppointments = state.appointments.filter(app => app.id !== appointmentId)
+      set({ appointments: filteredAppointments })
+      console.log(`✅ Deleted appointment ${appointmentId}`)
+    } catch (error: any) {
+      console.error('❌ Error deleting appointment:', error)
       throw error
     }
   },

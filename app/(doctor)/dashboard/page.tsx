@@ -59,10 +59,10 @@ export default function DoctorDashboard() {
 
   return (
     <TabProvider>
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
         <DoctorNavigation />
         <TabBar />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden min-h-0">
           <DoctorSidebar 
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}

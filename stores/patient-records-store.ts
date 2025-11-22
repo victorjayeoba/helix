@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { Appointment, fetchPatientAppointments } from '@/lib/api/appointments'
 import { Encounter, fetchPatientEncounters } from '@/lib/api/encounters'
+import { PatientTest, fetchPatientTests } from '@/lib/api/tests'
 
 interface PatientRecordsState {
   currentPatientId: number | null
@@ -8,8 +9,10 @@ interface PatientRecordsState {
   // Cached data keyed by patient ID
   appointmentsCache: Map<number, Appointment[]>
   encountersCache: Map<number, Encounter[]>
+  testsCache: Map<number, PatientTest[]>
   appointmentsCacheTime: Map<number, number>
   encountersCacheTime: Map<number, number>
+  testsCacheTime: Map<number, number>
   
   // Current patient's data (computed from cache)
   appointments: Appointment[]
@@ -20,10 +23,15 @@ interface PatientRecordsState {
   encountersLoading: boolean
   encountersError: string | null
 
+  tests: PatientTest[]
+  testsLoading: boolean
+  testsError: string | null
+
   cacheDuration: number
 
   fetchAppointments: (patientId: number, forceRefresh?: boolean) => Promise<void>
   fetchEncounters: (patientId: number, forceRefresh?: boolean) => Promise<void>
+  fetchTests: (patientId: number, forceRefresh?: boolean) => Promise<void>
   setCurrentPatient: (patientId: number | null) => void
   clear: () => void
   setCacheDuration: (duration: number) => void
@@ -34,8 +42,10 @@ export const usePatientRecordsStore = create<PatientRecordsState>((set, get) => 
   
   appointmentsCache: new Map(),
   encountersCache: new Map(),
+  testsCache: new Map(),
   appointmentsCacheTime: new Map(),
   encountersCacheTime: new Map(),
+  testsCacheTime: new Map(),
 
   appointments: [],
   appointmentsLoading: false,
@@ -44,6 +54,10 @@ export const usePatientRecordsStore = create<PatientRecordsState>((set, get) => 
   encounters: [],
   encountersLoading: false,
   encountersError: null,
+
+  tests: [],
+  testsLoading: false,
+  testsError: null,
 
   cacheDuration: 5 * 60 * 1000, // 5 minutes
 
@@ -153,14 +167,69 @@ export const usePatientRecordsStore = create<PatientRecordsState>((set, get) => 
     }
   },
 
+  fetchTests: async (patientId: number, forceRefresh = false) => {
+    const state = get()
+    const { testsCache, testsCacheTime, cacheDuration } = state
+
+    // Check cache for this specific patient
+    const cachedTime = testsCacheTime.get(patientId)
+    const cachedData = testsCache.get(patientId)
+
+    if (
+      !forceRefresh &&
+      cachedData &&
+      cachedTime &&
+      Date.now() - cachedTime < cacheDuration
+    ) {
+      // Use cached data, update current patient and tests array
+      set({ 
+        currentPatientId: patientId, 
+        tests: cachedData,
+        testsError: null 
+      })
+      return
+    }
+
+    set({
+      testsLoading: true,
+      testsError: null,
+      currentPatientId: patientId
+    })
+
+    try {
+      const data = await fetchPatientTests(patientId)
+      const newCache = new Map(testsCache)
+      const newCacheTime = new Map(testsCacheTime)
+      
+      newCache.set(patientId, data.results || [])
+      newCacheTime.set(patientId, Date.now())
+
+      const results = data.results || []
+      set({
+        testsCache: newCache,
+        testsCacheTime: newCacheTime,
+        tests: results,
+        testsLoading: false,
+        testsError: null
+      })
+    } catch (error: any) {
+      set({
+        testsLoading: false,
+        testsError: error.message || 'Failed to load tests'
+      })
+    }
+  },
+
   setCurrentPatient: (patientId: number | null) => {
     const state = get()
     const appointments = patientId ? (state.appointmentsCache.get(patientId) || []) : []
     const encounters = patientId ? (state.encountersCache.get(patientId) || []) : []
+    const tests = patientId ? (state.testsCache.get(patientId) || []) : []
     set({ 
       currentPatientId: patientId,
       appointments,
-      encounters
+      encounters,
+      tests
     })
   },
 
@@ -169,12 +238,16 @@ export const usePatientRecordsStore = create<PatientRecordsState>((set, get) => 
       currentPatientId: null,
       appointmentsCache: new Map(),
       encountersCache: new Map(),
+      testsCache: new Map(),
       appointmentsCacheTime: new Map(),
       encountersCacheTime: new Map(),
+      testsCacheTime: new Map(),
       appointmentsError: null,
       encountersError: null,
+      testsError: null,
       appointmentsLoading: false,
-      encountersLoading: false
+      encountersLoading: false,
+      testsLoading: false
     })
   },
 

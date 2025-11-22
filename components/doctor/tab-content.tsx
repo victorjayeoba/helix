@@ -15,7 +15,7 @@ export default function TabContent() {
 
   if (!activeTab) {
     return (
-      <div className="flex-1 bg-white h-full flex items-center justify-center">
+      <div className="flex-1 bg-white h-full flex items-center justify-center overflow-hidden min-h-0">
         <p className="text-slate-600">No tab selected</p>
       </div>
     )
@@ -43,7 +43,7 @@ export default function TabContent() {
       return <DoctorCoBrain />
     default:
       return (
-        <div className="flex-1 bg-white h-full p-6">
+        <div className="flex-1 bg-white h-full overflow-y-auto p-6 min-h-0">
           <h1 className="text-2xl font-semibold text-slate-900 mb-4">{activeTab.label}</h1>
           <p className="text-slate-600">Content for {activeTab.label} coming soon...</p>
         </div>

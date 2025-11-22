@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { User, Bot, Mic } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { User, Bot, Mic, MicOff } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useTabs } from '@/contexts/TabContext'
 import ReactMarkdown from 'react-markdown'
+
+// TypeScript declaration for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any
+    webkitSpeechRecognition: any
+  }
+}
 
 const navTabs = [
   'Calendar',
@@ -22,6 +30,82 @@ export default function DoctorNavigation() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [answer, setAnswer] = useState<string | null>(null)
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    
+    if (!SpeechRecognition) {
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      setError(null)
+      // Clear the prompt when starting to record
+      setPrompt('')
+    }
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = ''
+      // Build transcript from all results (not just new ones)
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' '
+        }
+      }
+      if (finalTranscript) {
+        setPrompt(finalTranscript.trim())
+      }
+    }
+
+    recognition.onerror = (event: any) => {
+      setIsListening(false)
+      if (event.error === 'not-allowed') {
+        setError('Microphone permission denied.')
+      } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        setError(`Speech recognition error: ${event.error}`)
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognitionRef.current = recognition
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+    }
+  }, [])
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      setError('Speech recognition not supported in your browser.')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      try {
+        recognitionRef.current.start()
+      } catch (error) {
+        console.error('Error starting recognition:', error)
+        setError('Failed to start voice recognition.')
+      }
+    }
+  }
 
   const handleNavClick = (tab: string) => {
     // Map tab names to display labels
@@ -56,6 +140,11 @@ export default function DoctorNavigation() {
           <button
             className="p-2 hover:bg-slate-600 rounded-lg transition flex items-center gap-2"
             onClick={() => {
+              // Stop listening if active when closing
+              if (isListening && recognitionRef.current) {
+                recognitionRef.current.stop()
+                setIsListening(false)
+              }
               setCopilotOpen((prev) => !prev)
               setError(null)
               setAnswer(null)
@@ -69,7 +158,17 @@ export default function DoctorNavigation() {
             <div className="absolute right-12 top-10 w-80 bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-200 p-4 z-50">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-slate-900">Helix CoBrain</p>
-                <button className="p-1 hover:bg-slate-100 rounded" onClick={() => setCopilotOpen(false)}>
+                <button 
+                  className="p-1 hover:bg-slate-100 rounded" 
+                  onClick={() => {
+                    // Stop listening if active when closing
+                    if (isListening && recognitionRef.current) {
+                      recognitionRef.current.stop()
+                      setIsListening(false)
+                    }
+                    setCopilotOpen(false)
+                  }}
+                >
                   ✕
                 </button>
               </div>
@@ -82,13 +181,35 @@ export default function DoctorNavigation() {
                     className="pr-10 resize-none"
                     placeholder="Ask Helix CoBrain..."
                   />
-                  <Mic className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
+                  <button
+                    onClick={toggleListening}
+                    className={`absolute right-3 top-3 p-1.5 rounded-full transition-colors ${
+                      isListening 
+                        ? 'bg-red-100 text-red-600 animate-pulse' 
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                    }`}
+                    title={isListening ? 'Stop recording' : 'Start voice input'}
+                    type="button"
+                  >
+                    {isListening ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 <Button
                   className="w-full bg-helix-primary hover:bg-helix-primary/90"
-                  disabled={loading || prompt.trim().length === 0}
+                  disabled={loading || prompt.trim().length === 0 || isListening}
                   onClick={async () => {
                     if (!prompt.trim()) return
+                    
+                    // Stop listening if active
+                    if (isListening) {
+                      recognitionRef.current?.stop()
+                      setIsListening(false)
+                    }
+
                     setLoading(true)
                     setError(null)
                     setAnswer(null)

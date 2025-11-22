@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Calendar, MessageSquare, MapPin, User, Bell, LogOut, ChevronLeft, ChevronRight, AlertCircle, Menu, X } from 'lucide-react'
+import { Home, Calendar, MessageSquare, MapPin, User, Bell, LogOut, ChevronLeft, ChevronRight, AlertCircle, Menu, X, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { logOut } from '@/lib/firebase/auth'
@@ -49,6 +49,7 @@ export default function PatientSidebar({ activeView, setActiveView, collapsed, o
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'appointments', label: 'Appointments', icon: Calendar, badge: appointmentCount },
+    { id: 'tests', label: 'Tests', icon: FileText },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'find-healthcare', label: 'Find Healthcare', icon: MapPin },
     { id: 'profile', label: 'My Profile', icon: User },

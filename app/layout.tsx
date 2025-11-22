@@ -29,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden">
-      <body className={`${manrope.className} font-sans antialiased bg-background overflow-x-hidden`}>
+    <html lang="en" className="overflow-x-hidden h-full">
+      <body className={`${manrope.className} font-sans antialiased bg-background overflow-x-hidden h-full`}>
         <AuthProvider>
           {children}
           <Toaster />

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 const navTabs = [
   'Home',
   'Appointments',
+  'Tests',
   'Chat',
   'Find Healthcare'
 ]

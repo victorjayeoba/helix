@@ -3,6 +3,290 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Print Styles for Test Reports */
+@media print {
+  /* Hide everything except what we want to print */
+  body > *:not([role="dialog"]) {
+    display: none !important;
+  }
+  
+  /* Hide dialog overlay and backdrop */
+  [data-radix-dialog-overlay] {
+    display: none !important;
+  }
+  
+  /* Show and style dialog for print */
+  [role="dialog"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    overflow: visible !important;
+    z-index: 9999 !important;
+    display: block !important;
+  }
+  
+  /* Make dialog content full width and visible */
+  [data-radix-dialog-content] {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  
+  /* Hide print:hidden elements */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Make the report content visible and properly styled */
+  .print-report {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  
+  .print-report * {
+    display: revert !important;
+  }
+  
+  /* Header styling for print */
+  .print-report h1 {
+    font-size: 28pt !important;
+    font-weight: bold !important;
+    color: #0d4c73 !important;
+    margin-bottom: 8pt !important;
+    page-break-after: avoid !important;
+  }
+  
+  .print-report h2 {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+    color: #1e293b !important;
+    margin-top: 20pt !important;
+    margin-bottom: 12pt !important;
+    padding-bottom: 6pt !important;
+    border-bottom: 2pt solid #1e293b !important;
+    page-break-after: avoid !important;
+  }
+  
+  /* Text styling */
+  .print-report p {
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    color: #1e293b !important;
+    margin-bottom: 8pt !important;
+  }
+  
+  .print-report .text-3xl {
+    font-size: 28pt !important;
+  }
+  
+  .print-report .text-xl {
+    font-size: 18pt !important;
+  }
+  
+  .print-report .text-sm {
+    font-size: 10pt !important;
+  }
+  
+  .print-report .text-xs {
+    font-size: 9pt !important;
+  }
+  
+  /* Font weights */
+  .print-report .font-semibold {
+    font-weight: 600 !important;
+  }
+  
+  .print-report .font-bold {
+    font-weight: 700 !important;
+  }
+  
+  /* Grid layout for print */
+  .print-report .grid {
+    display: grid !important;
+    gap: 12pt !important;
+  }
+  
+  .print-report .grid-cols-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  
+  /* Spacing */
+  .print-report .mb-6 {
+    margin-bottom: 24pt !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .print-report .mb-4 {
+    margin-bottom: 16pt !important;
+  }
+  
+  .print-report .mt-8 {
+    margin-top: 32pt !important;
+  }
+  
+  .print-report .pt-6 {
+    padding-top: 24pt !important;
+  }
+  
+  .print-report .pb-6 {
+    padding-bottom: 24pt !important;
+  }
+  
+  /* Borders */
+  .print-report .border-b-2 {
+    border-bottom-width: 3pt !important;
+    border-color: #1e293b !important;
+  }
+  
+  .print-report .border-t-2 {
+    border-top-width: 3pt !important;
+    border-color: #1e293b !important;
+  }
+  
+  .print-report .border-b {
+    border-bottom-width: 1pt !important;
+    border-color: #e2e8f0 !important;
+  }
+  
+  /* Background colors - ensure they print */
+  .print-report .bg-slate-50 {
+    background-color: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Ensure text colors print */
+  .print-report .text-slate-900 {
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print-report .text-slate-700 {
+    color: #334155 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print-report .text-slate-600 {
+    color: #475569 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print-report .text-slate-500 {
+    color: #64748b !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Prevent page breaks inside sections */
+  .print-report .space-y-4 > * {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Footer spacing for print */
+  .print-report .mt-8.pt-6 {
+    margin-top: 40pt !important;
+    padding-top: 24pt !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* Header border for print */
+  .print-report .border-b-2.pb-6 {
+    border-bottom-width: 4pt !important;
+    padding-bottom: 24pt !important;
+  }
+  
+  /* Rounded corners - remove for print */
+  .print-report .rounded {
+    border-radius: 0 !important;
+  }
+  
+  /* Flex layouts for print */
+  .print-report .flex {
+    display: flex !important;
+  }
+  
+  .print-report .items-center {
+    align-items: center !important;
+  }
+  
+  .print-report .justify-between {
+    justify-content: space-between !important;
+  }
+  
+  /* Page break settings */
+  .page-break {
+    page-break-after: always;
+  }
+  
+  /* Ensure proper spacing and margins */
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+  
+  /* Remove any shadows or effects */
+  .print-report * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  /* Ensure proper line breaks */
+  .print-report .whitespace-pre-wrap {
+    white-space: pre-wrap !important;
+  }
+  
+  /* Font family for print */
+  .print-report {
+    font-family: 'Times New Roman', serif !important;
+  }
+  
+  .print-report .font-mono {
+    font-family: 'Courier New', monospace !important;
+  }
+  
+  /* Hide scrollbars and overflow */
+  .print-report {
+    overflow: visible !important;
+  }
+  
+  /* Ensure proper display */
+  .print-report > * {
+    display: block !important;
+  }
+  
+  .print-report .space-y-4 > * {
+    display: block !important;
+  }
+}
+
 :root {
   /* HELIX Medical Theme */
   --helix-primary: #0D4C73;
@@ -132,9 +416,11 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html, body {
-    @apply overflow-x-hidden;
-  }
+html, body {
+  @apply overflow-x-hidden;
+  height: 100%;
+  overflow-y: hidden;
+}
   body {
     @apply bg-background text-foreground;
   }

@@ -109,3 +109,33 @@ export async function updateAppointment(
   }
 }
 
+export async function deleteAppointment(appointmentId: number): Promise<void> {
+  try {
+    const response = await fetch(`/api/appointments/${appointmentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || `Failed to delete appointment: ${response.statusText}`)
+    }
+
+    // DELETE may return 204 No Content, so don't try to parse JSON
+    if (response.status === 204) {
+      return
+    }
+
+    // If there's a response body, parse it
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('application/json')) {
+      await response.json()
+    }
+  } catch (error: any) {
+    console.error('❌ Error deleting appointment:', error.message)
+    throw error
+  }
+}
+

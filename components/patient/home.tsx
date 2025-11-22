@@ -159,7 +159,7 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
                 <a
                   key={index}
                   href="/actions"
-                  className={`${action.color} border rounded-xl p-3 text-left hover:shadow-md transition-all block`}
+                  className={`${action.color} border rounded-xl p-3 text-left hover:shadow-md transition-all block cursor-pointer`}
                 >
                   <Icon className="w-6 h-6 mb-2" />
                   <h3 className="font-semibold text-sm mb-1">{action.title}</h3>
@@ -169,7 +169,7 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
                 <button
                   key={index}
                   onClick={() => onNavigate && action.view && onNavigate(action.view)}
-                  className={`${action.color} border rounded-xl p-3 text-left hover:shadow-md transition-all`}
+                  className={`${action.color} border rounded-xl p-3 text-left hover:shadow-md transition-all cursor-pointer`}
                 >
                   <Icon className="w-6 h-6 mb-2" />
                   <h3 className="font-semibold text-sm mb-1">{action.title}</h3>
@@ -183,41 +183,41 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
         {/* Health Overview - Only Next Checkup (removed mock vitals) */}
         <div className="grid grid-cols-1 gap-3 md:gap-4">
           {/* Next Checkup Card with calendar bar chart background */}
-          <Card className="relative overflow-hidden rounded-xl bg-linear-to-br from-purple-50 to-white border-purple-100 hover:shadow-2xl hover:scale-105 hover:border-purple-300 transition-all duration-500 cursor-pointer group">
-            <div className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity duration-500">
+          <Card className="relative overflow-hidden rounded-xl bg-linear-to-br from-purple-50 to-white border-purple-100">
+            <div className="absolute inset-0 opacity-25">
               <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 400 200">
                 {/* Bar chart representing appointment frequency - animated bars */}
-                <rect x="20" y="80" width="30" height="100" fill="#8b5cf6" rx="4" className="group-hover:animate-pulse">
-                  <animate attributeName="height" values="100;110;100" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="80;70;80" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="20" y="80" width="30" height="100" fill="#8b5cf6" rx="4">
+                  <animate attributeName="height" values="100;110;100" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="80;70;80" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="70" y="60" width="30" height="120" fill="#7c3aed" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.1s'}}>
-                  <animate attributeName="height" values="120;130;120" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="60;50;60" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="70" y="60" width="30" height="120" fill="#7c3aed" rx="4" style={{animationDelay: '0.1s'}}>
+                  <animate attributeName="height" values="120;130;120" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="60;50;60" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="120" y="100" width="30" height="80" fill="#8b5cf6" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.2s'}}>
-                  <animate attributeName="height" values="80;90;80" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="100;90;100" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="120" y="100" width="30" height="80" fill="#8b5cf6" rx="4" style={{animationDelay: '0.2s'}}>
+                  <animate attributeName="height" values="80;90;80" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="100;90;100" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="170" y="70" width="30" height="110" fill="#7c3aed" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.3s'}}>
-                  <animate attributeName="height" values="110;120;110" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="70;60;70" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="170" y="70" width="30" height="110" fill="#7c3aed" rx="4" style={{animationDelay: '0.3s'}}>
+                  <animate attributeName="height" values="110;120;110" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="70;60;70" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="220" y="40" width="30" height="140" fill="#8b5cf6" rx="4" opacity="0.9" className="group-hover:animate-pulse" style={{animationDelay: '0.4s'}}>
-                  <animate attributeName="height" values="140;150;140" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="40;30;40" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="220" y="40" width="30" height="140" fill="#8b5cf6" rx="4" opacity="0.9" style={{animationDelay: '0.4s'}}>
+                  <animate attributeName="height" values="140;150;140" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="40;30;40" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="270" y="90" width="30" height="90" fill="#7c3aed" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.5s'}}>
-                  <animate attributeName="height" values="90;100;90" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="90;80;90" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="270" y="90" width="30" height="90" fill="#7c3aed" rx="4" style={{animationDelay: '0.5s'}}>
+                  <animate attributeName="height" values="90;100;90" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="90;80;90" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="320" y="65" width="30" height="115" fill="#8b5cf6" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.6s'}}>
-                  <animate attributeName="height" values="115;125;115" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="65;55;65" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="320" y="65" width="30" height="115" fill="#8b5cf6" rx="4" style={{animationDelay: '0.6s'}}>
+                  <animate attributeName="height" values="115;125;115" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="65;55;65" dur="2s" repeatCount="indefinite" />
                 </rect>
-                <rect x="370" y="50" width="30" height="130" fill="#7c3aed" rx="4" className="group-hover:animate-pulse" style={{animationDelay: '0.7s'}}>
-                  <animate attributeName="height" values="130;140;130" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
-                  <animate attributeName="y" values="50;40;50" dur="2s" repeatCount="indefinite" className="group-hover:block hidden" />
+                <rect x="370" y="50" width="30" height="130" fill="#7c3aed" rx="4" style={{animationDelay: '0.7s'}}>
+                  <animate attributeName="height" values="130;140;130" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="y" values="50;40;50" dur="2s" repeatCount="indefinite" />
                 </rect>
                 {/* Grid lines */}
                 <line x1="0" y1="60" x2="400" y2="60" stroke="#c4b5fd" strokeWidth="0.5" opacity="0.3"/>
@@ -227,16 +227,16 @@ export default function PatientHome({ onNavigate, onMobileMenuToggle }: PatientH
               </svg>
             </div>
             <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-slate-700 group-hover:text-purple-600 transition-colors duration-300">Next Checkup</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700">Next Checkup</CardTitle>
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="flex items-center gap-2">
-                <Calendar className="w-6 h-6 text-purple-600 group-hover:scale-125 transition-transform duration-300" />
-                <span className="text-2xl font-bold text-slate-900 group-hover:text-purple-600 transition-colors duration-300">
+                <Calendar className="w-6 h-6 text-purple-600" />
+                <span className="text-2xl font-bold text-slate-900">
                   {loading ? '...' : nextAppointmentDate.split('(')[0].trim()}
                 </span>
               </div>
-              <p className="text-xs text-slate-600 mt-2 font-medium group-hover:text-purple-700 transition-colors duration-300">
+              <p className="text-xs text-slate-600 mt-2 font-medium">
                 {loading ? 'Loading...' : nextAppointmentDate.includes('(') ? nextAppointmentDate.match(/\((.*?)\)/)?.[1] || 'Not scheduled' : 'Not scheduled'}
               </p>
             </CardContent>

@@ -43,17 +43,8 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
   const [dorraPatientId, setDorraPatientId] = useState<number | null>(null)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   
-  // Booking form state
-  const [bookingForm, setBookingForm] = useState({
-    appointmentType: 'virtual',
-    specialty: '',
-    doctorName: '',
-    date: '',
-    time: '',
-    reasonType: '',
-    description: '',
-    questions: ''
-  })
+  // Booking prompt state
+  const [bookingPrompt, setBookingPrompt] = useState('')
 
   // Reschedule form state
   const [rescheduleForm, setRescheduleForm] = useState({
@@ -124,8 +115,8 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
       return
     }
 
-    if (!bookingForm.specialty || !bookingForm.date || !bookingForm.time) {
-      toast.error('Please fill in all required fields')
+    if (!bookingPrompt.trim()) {
+      toast.error('Please provide appointment details')
       return
     }
 
@@ -137,13 +128,7 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId: dorraPatientId,
-          specialty: bookingForm.specialty,
-          date: bookingForm.date,
-          time: bookingForm.time,
-          reason: bookingForm.reasonType,
-          type: bookingForm.appointmentType,
-          description: bookingForm.description,
-          doctorName: bookingForm.doctorName
+          prompt: bookingPrompt.trim()
         })
       })
 
@@ -152,19 +137,44 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
       if (data.success) {
         toast.success('Appointment requested successfully! 🎉')
         setBookingDialogOpen(false)
-        // Reset form
-        setBookingForm({
-          appointmentType: 'virtual',
-          specialty: '',
-          doctorName: '',
-          date: '',
-          time: '',
-          reasonType: '',
-          description: '',
-          questions: ''
-        })
+        // Reset prompt
+        setBookingPrompt('')
         
         // Refresh appointments
+        const fetchAppointments = async () => {
+          if (!user || !dorraPatientId) return
+
+          try {
+            setLoading(true)
+            const response = await fetch(`/api/patients/${dorraPatientId}/appointments`)
+            
+            if (!response.ok) {
+              throw new Error('Failed to fetch appointments')
+            }
+
+            const data = await response.json()
+            const appointmentsList: Appointment[] = data.results || []
+            
+            // Categorize appointments
+            const now = new Date()
+            const categorized: AppointmentGroup = {
+              upcoming: appointmentsList.filter(apt => 
+                new Date(apt.date) > now && apt.status === 'active'
+              ),
+              past: appointmentsList.filter(apt => 
+                apt.status === 'completed' || new Date(apt.date) < now
+              ),
+              cancelled: []
+            }
+            
+            setAppointments(categorized)
+          } catch (error) {
+            console.error('Error fetching appointments:', error)
+            toast.error('Failed to load appointments')
+          } finally {
+            setLoading(false)
+          }
+        }
         fetchAppointments()
 
         // Create notification
@@ -175,7 +185,7 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
               userId: user.uid,
               type: 'appointment',
               title: 'Appointment Booked',
-              message: `Your ${bookingForm.specialty} appointment has been scheduled for ${bookingForm.date} at ${bookingForm.time}`,
+              message: 'Your appointment request has been submitted successfully',
               read: false
             })
           } catch (notifError) {
@@ -262,37 +272,62 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
     }
 
     try {
-      const response = await fetch(`/api/appointments/${appointment.id}/cancel`, {
-        method: 'POST'
+      const response = await fetch(`/api/appointments/${appointment.id}`, {
+        method: 'DELETE'
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success('Appointment cancelled successfully')
-        fetchAppointments()
-
-        // Create notification
-        if (user) {
-          try {
-            const { createNotification } = await import('@/lib/firebase/notifications')
-            await createNotification({
-              userId: user.uid,
-              type: 'alert',
-              title: 'Appointment Cancelled',
-              message: `Your appointment has been cancelled`,
-              read: false
-            })
-          } catch (notifError) {
-            console.error('Failed to create notification:', notifError)
-          }
-        }
-      } else {
-        toast.error(data.message || 'Failed to cancel appointment')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to cancel appointment')
       }
-    } catch (error) {
+
+      toast.success('Appointment cancelled successfully')
+      
+      // Refresh appointments by re-fetching
+      setLoading(true)
+      try {
+        const response = await fetch(`/api/patients/${dorraPatientId}/appointments`)
+        if (!response.ok) throw new Error('Failed to fetch appointments')
+        const data = await response.json()
+        const appointmentsList: Appointment[] = data.results || []
+        
+        const now = new Date()
+        const categorized: AppointmentGroup = {
+          upcoming: appointmentsList.filter(apt => 
+            new Date(apt.date) > now && apt.status === 'active'
+          ),
+          past: appointmentsList.filter(apt => 
+            apt.status === 'completed' || new Date(apt.date) < now
+          ),
+          cancelled: []
+        }
+        
+        setAppointments(categorized)
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+        toast.error('Failed to refresh appointments')
+      } finally {
+        setLoading(false)
+      }
+
+      // Create notification
+      if (user) {
+        try {
+          const { createNotification } = await import('@/lib/firebase/notifications')
+          await createNotification({
+            userId: user.uid,
+            type: 'alert',
+            title: 'Appointment Cancelled',
+            message: `Your appointment has been cancelled`,
+            read: false
+          })
+        } catch (notifError) {
+          console.error('Failed to create notification:', notifError)
+        }
+      }
+    } catch (error: any) {
       console.error('Cancel error:', error)
-      toast.error('An error occurred while cancelling')
+      toast.error(error.message || 'An error occurred while cancelling')
     }
   }
 
@@ -336,135 +371,39 @@ export default function PatientAppointments({ onMobileMenuToggle }: PatientAppoi
                 Book Appointment
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Book New Appointment</DialogTitle>
                 <DialogDescription>
-                  Fill in the details to schedule your appointment
+                  Describe your appointment request. Include date, time, reason, and any other relevant details.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleBookAppointment} className="space-y-4 mt-4">
-                {/* Appointment Type - Virtual or Physical */}
                 <div className="space-y-2">
-                  <Label>Appointment Type</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setBookingForm({...bookingForm, appointmentType: 'virtual'})}
-                      className={`px-4 py-3 border-2 rounded-lg font-medium transition ${
-                        bookingForm.appointmentType === 'virtual'
-                          ? 'border-helix-primary bg-helix-primary text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-helix-primary'
-                      }`}
-                    >
-                      Virtual
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBookingForm({...bookingForm, appointmentType: 'physical'})}
-                      className={`px-4 py-3 border-2 rounded-lg font-medium transition ${
-                        bookingForm.appointmentType === 'physical'
-                          ? 'border-helix-primary bg-helix-primary text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-helix-primary'
-                      }`}
-                    >
-                      Physical
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="specialty">Specialty *</Label>
-                  <Select value={bookingForm.specialty} onValueChange={(value) => setBookingForm({...bookingForm, specialty: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select specialty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="General Practitioner">General Practitioner</SelectItem>
-                      <SelectItem value="Cardiology">Cardiology</SelectItem>
-                      <SelectItem value="Dermatology">Dermatology</SelectItem>
-                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                      <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="doctor">Preferred Doctor (Optional)</Label>
-                  <Input 
-                    id="doctor" 
-                    placeholder="Search for a doctor"
-                    value={bookingForm.doctorName}
-                    onChange={(e) => setBookingForm({...bookingForm, doctorName: e.target.value})}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date *</Label>
-                    <Input 
-                      id="date" 
-                      type="date"
-                      value={bookingForm.date}
-                      onChange={(e) => setBookingForm({...bookingForm, date: e.target.value})}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="time">Time *</Label>
-                    <Input 
-                      id="time" 
-                      type="time"
-                      value={bookingForm.time}
-                      onChange={(e) => setBookingForm({...bookingForm, time: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                {/* Appointment Reason Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="reason-type">Reason for Appointment</Label>
-                  <Select value={bookingForm.reasonType} onValueChange={(value) => setBookingForm({...bookingForm, reasonType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select reason" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Consultation">Consultation</SelectItem>
-                      <SelectItem value="Follow-up Visit">Follow-up Visit</SelectItem>
-                      <SelectItem value="Regular Checkup">Regular Checkup</SelectItem>
-                      <SelectItem value="Prescription Refill">Prescription Refill</SelectItem>
-                      <SelectItem value="Discuss Test Results">Discuss Test Results</SelectItem>
-                      <SelectItem value="Urgent/Emergency">Urgent/Emergency</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="prompt">Appointment Details *</Label>
                   <Textarea
-                    id="description"
-                    placeholder="Describe your symptoms, concerns, or reason for visit in detail..."
-                    rows={3}
-                    value={bookingForm.description}
-                    onChange={(e) => setBookingForm({...bookingForm, description: e.target.value})}
+                    id="prompt"
+                    placeholder="Example: Schedule a virtual appointment with a General Practitioner on December 25th, 2024 at 2:30 PM for a regular checkup. I've been experiencing mild headaches for the past week."
+                    rows={8}
+                    value={bookingPrompt}
+                    onChange={(e) => setBookingPrompt(e.target.value)}
+                    className="resize-none"
                   />
+                  <p className="text-xs text-slate-500">
+                    <strong>Template:</strong> Schedule a [virtual/in-person] appointment with [specialty/doctor name] on [date] at [time] for [reason]. [Additional details about symptoms, concerns, or questions].
+                  </p>
                 </div>
 
-                {/* Questions for Doctor */}
-                <div className="space-y-2">
-                  <Label htmlFor="questions">Questions for Doctor (Optional)</Label>
-                  <Textarea
-                    id="questions"
-                    placeholder="List any specific questions you'd like to ask the doctor during your appointment..."
-                    rows={3}
-                    value={bookingForm.questions}
-                    onChange={(e) => setBookingForm({...bookingForm, questions: e.target.value})}
-                  />
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-slate-700 mb-2">Example prompts:</p>
+                  <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                    <li>"Schedule a virtual appointment with a Cardiologist on January 15th, 2025 at 10:00 AM for chest pain consultation."</li>
+                    <li>"Book an in-person appointment with Dr. Smith on December 20th, 2024 at 3:00 PM for a follow-up visit. I need to discuss my test results."</li>
+                    <li>"Schedule a virtual appointment for General Practitioner on January 5th, 2025 at 2:30 PM for prescription refill. I'm running low on my blood pressure medication."</li>
+                  </ul>
                 </div>
 
-                <Button type="submit" className="w-full bg-helix-primary" disabled={isBooking}>
+                <Button type="submit" className="w-full bg-helix-primary" disabled={isBooking || !bookingPrompt.trim()}>
                   {isBooking ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
