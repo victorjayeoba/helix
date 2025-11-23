@@ -42,7 +42,7 @@ export default function HeroSection() {
           <div className="relative w-full">
             <div className="rounded-2xl overflow-hidden shadow-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=700&fit=crop&q=80" 
+                src="/assets/cover.png" 
                 alt="HELIX Medical Dashboard Preview" 
                 className="w-full h-auto object-cover"
               />
