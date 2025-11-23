@@ -32,7 +32,10 @@ export default function HeroSection() {
                 >
                   Get Started <ArrowRight className="w-4 h-4" />
                 </button>
-                <button className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 border-2 border-helix-primary text-helix-primary font-medium rounded-full hover:bg-helix-light transition text-sm sm:text-base">
+                <button 
+                  onClick={() => window.open('https://www.youtube.com/watch?v=zYk63ZEa52Y', '_blank')}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 border-2 border-helix-primary text-helix-primary font-medium rounded-full hover:bg-helix-light transition text-sm sm:text-base"
+                >
                   Request Demo
                 </button>
               </div>
